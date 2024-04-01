@@ -1,15 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 
-const baseCoreCode = fs.readFileSync(
+export const baseCoreCode = fs.readFileSync(
     path.join(__dirname, './assets/formio.core.min.js'),
     'utf8',
 );
-const fastJsonPatchCode = fs.readFileSync(
+export const fastJsonPatchCode = fs.readFileSync(
     path.join(__dirname, './assets/fast-json-patch.min.js'),
     'utf8',
 );
-const polyfillCode = `
+export const polyfillCode = `
 var Text              = class {};
 var HTMLElement       = class {};
 var HTMLCanvasElement = class {};
@@ -19,7 +19,7 @@ var document          = {
   cookie: '',
   getElementsByTagName: () => [],
   documentElement: {
-    style: [],
+    style: []
     firstElementChild: {appendChild: () => {}}
   }
 };
@@ -32,16 +32,9 @@ var btoa = (str) => {
 //var setTimeout = () => {};
 var self = global;
 `;
-const aliasesCode = `
+export const aliasesCode = `
 utils = FormioCore.Utils;
 util = FormioCore.Utils;
 
 // jsonLogic = util.jsonLogic;
 `;
-
-export const coreCode = [
-    polyfillCode,
-    baseCoreCode,
-    fastJsonPatchCode,
-    aliasesCode,
-];
