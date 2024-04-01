@@ -13,7 +13,7 @@ export type RenderEmailOptions = {
     render: any;
     context: any;
     additionalDeps?: string[];
-    macros: any;
+    macros?: any;
 };
 
 export async function renderEmail({
