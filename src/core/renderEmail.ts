@@ -12,14 +12,14 @@ import { nunjucksCode } from './deps/nunjucks/index';
 export type RenderEmailOptions = {
     render: any;
     context: any;
-    deps: string[];
+    additionalDeps?: string[];
     macros: any;
 };
 
 export async function renderEmail({
     render,
     context = {},
-    deps = [lodashCode, momentCode, ...coreCode, ...nunjucksCode],
+    additionalDeps = [],
     macros = nunjucksMacros,
 }: RenderEmailOptions): Promise<string> {
     if (context._private) {
@@ -70,7 +70,13 @@ export async function renderEmail({
     }
 
     const res = await evaluate({
-        deps,
+        deps: [
+            lodashCode,
+            momentCode,
+            ...coreCode,
+            ...nunjucksCode,
+            ...additionalDeps,
+        ],
         data: data,
         code: getScript(render),
     });

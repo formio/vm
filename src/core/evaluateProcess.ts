@@ -34,7 +34,7 @@ scope = FormioCore.processSync(context);
 export type EvaluateProcessorsOptions = {
     form: any;
     submission: any;
-    deps?: string[];
+    additionalDeps?: string[];
     scope?: any;
     token?: string;
 };
@@ -49,7 +49,7 @@ export async function evaluateProcess({
     submission,
     scope = {},
     token = '',
-    deps = [lodashCode, momentCode, ...coreCode, instanceShimCode],
+    additionalDeps = [],
 }: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
     const serializedSubmission = JSON.parse(JSON.stringify(submission));
     const evaluateContext = {
@@ -67,7 +67,13 @@ export async function evaluateProcess({
         },
     };
     const result = await evaluate({
-        deps,
+        deps: [
+            lodashCode,
+            momentCode,
+            ...coreCode,
+            instanceShimCode,
+            ...additionalDeps,
+        ],
         data: { context: evaluateContext },
         code,
     });
