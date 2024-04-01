@@ -4,7 +4,12 @@ import { Context } from 'isolated-vm';
 import ContextBuilder from '../ContextBuilder';
 import { lodashCode } from '../deps/lodash';
 import { momentCode } from '../deps/moment';
-import { coreCode } from '../deps/core';
+import {
+    aliasesCode,
+    baseCoreCode,
+    fastJsonPatchCode,
+    polyfillCode,
+} from '../deps/core';
 import { instanceShimCode } from '../InstanceShim';
 import { nunjucksCode } from '../deps/nunjucks';
 
@@ -14,7 +19,10 @@ describe('Test ContextBuilder', () => {
         const dependencies = [
             lodashCode,
             momentCode,
-            ...coreCode,
+            polyfillCode,
+            baseCoreCode,
+            fastJsonPatchCode,
+            aliasesCode,
             instanceShimCode,
             ...nunjucksCode,
         ];

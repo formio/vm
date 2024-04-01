@@ -5,7 +5,12 @@ import { instanceShimCode } from './InstanceShim';
 import { RootShim } from './RootShim';
 import { lodashCode } from './deps/lodash';
 import { momentCode } from './deps/moment';
-import { coreCode } from './deps/core';
+import {
+    baseCoreCode,
+    polyfillCode,
+    aliasesCode,
+    fastJsonPatchCode,
+} from './deps/core';
 
 const code = `
 root = new RootShim(context.form, context.submission);
@@ -34,9 +39,17 @@ scope = FormioCore.processSync(context);
 export type EvaluateProcessorsOptions = {
     form: any;
     submission: any;
-    additionalDeps?: string[];
+    deps?: EvaluationDependencies;
     scope?: any;
     token?: string;
+};
+
+export type EvaluationDependencies = {
+    lodash?: string;
+    moment?: string;
+    core?: string;
+    fastJsonPatch?: string;
+    additionalDeps?: string[];
 };
 
 export type EvaluateProcessorsResult = {
@@ -44,12 +57,35 @@ export type EvaluateProcessorsResult = {
     data: any;
 };
 
+/**
+ * Function to allow the caller of evaluateProcess to provide their own dependencies, but
+ * falls back to @formio/vm-managed dependencies if they're not provided
+ */
+function generateDefaultDependencies({
+    lodash = lodashCode,
+    moment = momentCode,
+    core = baseCoreCode,
+    fastJsonPatch = fastJsonPatchCode,
+    additionalDeps = [],
+}: EvaluationDependencies): string[] {
+    return [
+        lodash,
+        moment,
+        polyfillCode,
+        core,
+        fastJsonPatch,
+        aliasesCode,
+        instanceShimCode,
+        ...additionalDeps,
+    ];
+}
+
 export async function evaluateProcess({
     form,
     submission,
+    deps = {},
     scope = {},
     token = '',
-    additionalDeps = [],
 }: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
     const serializedSubmission = JSON.parse(JSON.stringify(submission));
     const evaluateContext = {
@@ -67,13 +103,7 @@ export async function evaluateProcess({
         },
     };
     const result = await evaluate({
-        deps: [
-            lodashCode,
-            momentCode,
-            ...coreCode,
-            instanceShimCode,
-            ...additionalDeps,
-        ],
+        deps: generateDefaultDependencies(deps),
         data: { context: evaluateContext },
         code,
     });
@@ -92,6 +122,7 @@ export async function evaluateProcessMocked(
     (globalThis as any).FormioCore = require('@formio/core');
     (globalThis as any).utils = FormioCore.Utils;
     (globalThis as any).util = FormioCore.Utils;
+    // TODO: add reporting here, types are not cooperating at the moment
 
     const submission = JSON.parse(JSON.stringify(options.submission));
     const context: any = {

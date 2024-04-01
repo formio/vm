@@ -3,7 +3,12 @@ import { expect } from 'chai';
 import { evaluate } from '../evaluate';
 import { lodashCode } from '../deps/lodash';
 import { momentCode } from '../deps/moment';
-import { coreCode } from '../deps/core';
+import {
+    aliasesCode,
+    baseCoreCode,
+    fastJsonPatchCode,
+    polyfillCode,
+} from '../deps/core';
 import { nunjucksCode } from '../deps/nunjucks/index';
 
 describe('Test evaluate', () => {
@@ -27,7 +32,7 @@ describe('Test evaluate', () => {
 
     it('should evaluate simple code with core', async () => {
         const result = await evaluate({
-            deps: coreCode,
+            deps: [polyfillCode, baseCoreCode, fastJsonPatchCode, aliasesCode],
             data: {},
             code: 'FormioCore.Utils.getComponentKey({ key: "textField", type: "textfield", input: true})',
         });

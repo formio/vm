@@ -6,20 +6,51 @@ import { evaluate } from '..';
 import nunjucksMacros from './deps/nunjucks/nunjucks-macros';
 import { lodashCode } from './deps/lodash';
 import { momentCode } from './deps/moment';
-import { coreCode } from './deps/core';
+import {
+    baseCoreCode,
+    polyfillCode,
+    fastJsonPatchCode,
+    aliasesCode,
+} from './deps/core';
 import { nunjucksCode } from './deps/nunjucks/index';
 
 export type RenderEmailOptions = {
     render: any;
     context: any;
-    additionalDeps?: string[];
+    deps?: EvaluationDependencies;
     macros?: any;
 };
+
+type EvaluationDependencies = {
+    lodash?: string;
+    moment?: string;
+    core?: string;
+    fastJsonPatch?: string;
+    nunjucks?: string[];
+};
+
+function generateDefaultDependencies({
+    lodash = lodashCode,
+    moment = momentCode,
+    core = baseCoreCode,
+    fastJsonPatch = fastJsonPatchCode,
+    nunjucks = nunjucksCode,
+}: EvaluationDependencies) {
+    return [
+        lodash,
+        moment,
+        polyfillCode,
+        core,
+        fastJsonPatch,
+        aliasesCode,
+        ...nunjucks,
+    ];
+}
 
 export async function renderEmail({
     render,
     context = {},
-    additionalDeps = [],
+    deps = {},
     macros = nunjucksMacros,
 }: RenderEmailOptions): Promise<string> {
     if (context._private) {
@@ -70,13 +101,7 @@ export async function renderEmail({
     }
 
     const res = await evaluate({
-        deps: [
-            lodashCode,
-            momentCode,
-            ...coreCode,
-            ...nunjucksCode,
-            ...additionalDeps,
-        ],
+        deps: generateDefaultDependencies(deps),
         data: data,
         code: getScript(render),
     });

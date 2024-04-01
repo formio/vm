@@ -43,6 +43,7 @@ describe('Test evaluateProcess', () => {
         const result = await evaluateProcess({
             form,
             submission: { data },
+            deps: {},
         });
 
         expect(result.data).to.deep.equal({
@@ -67,6 +68,7 @@ describe('Test evaluateProcess', () => {
         const result = await evaluateProcess({
             form,
             submission: { data },
+            deps: {},
         });
 
         expect(result.scope).to.have.property('errors');
@@ -98,6 +100,7 @@ describe('Test evaluateProcess', () => {
         const result = await evaluateProcess({
             form,
             submission: { data },
+            deps: {},
         });
 
         expect(result.data).to.deep.equal({
@@ -126,6 +129,7 @@ describe('Test evaluateProcess', () => {
             },
             // Note: Not working with data: {}
             submission: { data },
+            deps: {},
         });
         expect(result.data).to.have.property('test').to.equal('test');
     });
@@ -153,6 +157,7 @@ describe('Test evaluateProcess', () => {
             },
             // Note: Not working with data: {}
             submission: { data },
+            deps: {},
         });
         expect(result.data).to.have.property('test').to.equal('test');
     });
