@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { config } from './config.js';
+import { config } from './config';
 
 function isStringHeader(
     key: string,
-    value: string | string[]
+    value: string | string[],
 ): asserts value is string {
     if (Array.isArray(value)) {
         throw new Error(`Received malformed ${key} header`);

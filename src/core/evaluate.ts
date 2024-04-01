@@ -1,13 +1,6 @@
 import ContextBuilder from './ContextBuilder';
 import _ from 'lodash';
 
-export type EvaluationDependency =
-    | 'lodash'
-    | 'moment'
-    | 'core'
-    | 'instanceShim'
-    | 'nunjucks';
-
 type TransferableValue = string | number | boolean | null | undefined | object;
 const isTransferableValue = (value: any): value is TransferableValue => {
     return (
@@ -21,7 +14,7 @@ const isTransferableValue = (value: any): value is TransferableValue => {
 };
 
 export type EvaluateOptions = {
-    deps?: EvaluationDependency[];
+    deps?: string[];
     data?: Record<string, any>;
     code: string;
     timeout?: number;

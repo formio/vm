@@ -1,33 +1,4 @@
 import { Isolate, Context } from 'isolated-vm';
-import { instanceShimCode } from './InstanceShim';
-import { lodashCode } from './deps/lodash';
-import { momentCode } from './deps/moment';
-import {
-    polyfillCode,
-    aliasesCode,
-    coreCode,
-    fastJsonPatchCode,
-} from './deps/core';
-import {
-    nunjucksCode,
-    nunjucksDateFilterCode,
-    nunjucksEnvironmentCode,
-} from './deps/nunjucks';
-import { nunjucksUtilsCode } from './deps/nunjucks-utils';
-
-// Dependency name corresponds to list of libraries to load when that dependency is requested
-const dependeciesMap: Record<string, string[]> = {
-    lodash: [lodashCode],
-    moment: [momentCode],
-    core: [polyfillCode, coreCode, fastJsonPatchCode, aliasesCode],
-    instanceShim: [instanceShimCode],
-    nunjucks: [
-        nunjucksCode,
-        nunjucksDateFilterCode,
-        nunjucksEnvironmentCode,
-        nunjucksUtilsCode,
-    ],
-};
 
 class ContextBuilder {
     private deps: string[] = [];
@@ -38,33 +9,15 @@ class ContextBuilder {
 
     constructor(private isolate: any) {}
 
-    withDependency(dependency: string): ContextBuilder {
-        if (!dependeciesMap[dependency]) {
-            throw new Error(`Dependency ${dependency} not found`);
+    withDependency(dependency: string): ContextBuilder;
+    withDependency(dependency: string[]): ContextBuilder;
+    withDependency(dependency: string | string[]): ContextBuilder {
+        if (Array.isArray(dependency)) {
+            this.deps.push(...dependency);
+        } else {
+            this.deps.push(dependency);
         }
-        if (Array.isArray(dependeciesMap[dependency])) {
-            dependeciesMap[dependency].forEach((code) => {
-                this.deps.push(code);
-            });
-            return this;
-        }
-        throw new Error(`Dependency ${dependency} not found`);
-    }
-
-    withLodash() {
-        return this.withDependency('lodash');
-    }
-
-    withMoment() {
-        return this.withDependency('moment');
-    }
-
-    withCore() {
-        return this.withDependency('core');
-    }
-
-    withNunjucks() {
-        return this.withDependency('nunjucks');
+        return this;
     }
 
     async createContext(): Promise<Context> {

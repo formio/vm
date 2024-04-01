@@ -1,38 +1,49 @@
 import fs from 'fs';
 import path from 'path';
 
-export const nunjucksCode = fs.readFileSync(path.join(__dirname, './assets/nunjucks.min.js'), 'utf8');
-export const nunjucksDateFilterCode = fs.readFileSync(path.join(__dirname, './assets/nunjucks-date-filter.js'), 'utf8')
-  // Remove 'use strict' and require statements
-  .replace(`'use strict';`, '')
-  .replace(/^.+require.+$/gm, '')
-  // Remove module.exports
-  .replace(`module.exports = dateFilter;`, '')
-  .replaceAll(`module.exports.`, '');
+import { nunjucksUtilsCode } from './nunjucks-utils';
+
+const baseNunjucksCode = fs.readFileSync(
+    path.join(__dirname, '../assets/nunjucks.min.js'),
+    'utf8',
+);
+const nunjucksDateFilterCode = fs
+    .readFileSync(
+        path.join(__dirname, '../assets/nunjucks-date-filter.js'),
+        'utf8',
+    )
+    // Remove 'use strict' and require statements
+    .replace(`'use strict';`, '')
+    .replace(/^.+require.+$/gm, '')
+    // Remove module.exports
+    .replace(`module.exports = dateFilter;`, '')
+    .replaceAll(`module.exports.`, '');
 
 // Strip away macros and escape breakout attempts.
 const sanitize = (input: any) => {
-  if (!input) {
-    throw new Error('Input is required for sanitize fn');
-  }
-  return input
-    .replace(/{{(.*(\.constructor|\]\().*)}}/g, '{% raw %}{{$1}}{% endraw %}')
+    if (!input) {
+        throw new Error('Input is required for sanitize fn');
+    }
+    return input.replace(
+        /{{(.*(\.constructor|\]\().*)}}/g,
+        '{% raw %}{{$1}}{% endraw %}',
+    );
 };
 
 // Unescape HTML sequences
 const unescape = (str: any) => {
-  if (!str) {
-    throw new Error('Input is required for unescape fn');
-  }
-  return str
-  .replace(/&lt;/g , '<')
-  .replace(/&gt;/g , '>')
-  .replace(/&quot;/g , '\"')
-  .replace(/&#39;/g , '\'')
-  .replace(/&amp;/g , '&')
+    if (!str) {
+        throw new Error('Input is required for unescape fn');
+    }
+    return str
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, '&');
 };
 
-export const nunjucksEnvironmentCode = `
+const nunjucksEnvironmentCode = `
 // Configure nunjucks to not watch any files
 const environment = nunjucks.configure([], {
   watch: false,
@@ -69,3 +80,10 @@ environment.addFilter('componentLabel', (key, components) => {
 sanitize = ${sanitize.toString()};
 unescape = ${unescape.toString()};
 `;
+
+export const nunjucksCode = [
+    baseNunjucksCode,
+    nunjucksDateFilterCode,
+    nunjucksEnvironmentCode,
+    nunjucksUtilsCode,
+];

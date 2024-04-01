@@ -1,11 +1,15 @@
 import { expect } from 'chai';
 
 import { evaluate } from '../evaluate';
+import { lodashCode } from '../deps/lodash';
+import { momentCode } from '../deps/moment';
+import { coreCode } from '../deps/core';
+import { nunjucksCode } from '../deps/nunjucks/index';
 
 describe('Test evaluate', () => {
     it('should evaluate simple code with lodash', async () => {
         const result = await evaluate({
-            deps: ['lodash'],
+            deps: [lodashCode],
             data: {},
             code: '_.camelCase("hello world")',
         });
@@ -14,7 +18,7 @@ describe('Test evaluate', () => {
 
     it('should evaluate simple code with moment', async () => {
         const result = await evaluate({
-            deps: ['moment'],
+            deps: [momentCode],
             data: {},
             code: 'moment(0).utc().format("YYYY-MM-DD")',
         });
@@ -23,7 +27,7 @@ describe('Test evaluate', () => {
 
     it('should evaluate simple code with core', async () => {
         const result = await evaluate({
-            deps: ['core'],
+            deps: coreCode,
             data: {},
             code: 'FormioCore.Utils.getComponentKey({ key: "textField", type: "textfield", input: true})',
         });
@@ -58,7 +62,7 @@ describe('Test evaluate', () => {
 
     it('should evaluate code with nunjucks', async () => {
         const result = await evaluate({
-            deps: ['nunjucks'],
+            deps: nunjucksCode,
             data: {},
             code: 'nunjucks.renderString("Hello {{ name }}", { name: "World" })',
         });
