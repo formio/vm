@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import ContextBuilder from '../ContextBuider';
+import ContextBuilder from '../ContextBuilder';
 import { Context } from 'isolated-vm';
 
 describe('Test ContextBuilder', () => {
