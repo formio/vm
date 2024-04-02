@@ -19,7 +19,7 @@ var document          = {
   cookie: '',
   getElementsByTagName: () => [],
   documentElement: {
-    style: []
+    style: [],
     firstElementChild: {appendChild: () => {}}
   }
 };
