@@ -2318,10 +2318,10 @@ for-own@^1.0.0:
   dependencies:
     for-in "^1.0.1"
 
-formiojs@4.19.1-rc.1:
-  version "4.19.1-rc.1"
-  resolved "https://registry.yarnpkg.com/formiojs/-/formiojs-4.19.1-rc.1.tgz#8b8d67a3e42b88128db4bb924c6801252b50538b"
-  integrity sha512-gpRPzwtUGTHqjqRiUL2Db1rkggNScOl4gnRNGZSazw9/xz1tQjuYRVEWuq5p1JnRNpOy3RwQdtkK8diKi/Z5Zg==
+formiojs@4.19.1:
+  version "4.19.1"
+  resolved "https://registry.yarnpkg.com/formiojs/-/formiojs-4.19.1.tgz#3658dd4bae267d199fc985c5de6e961f4ea6ab45"
+  integrity sha512-CCgeDYYdnLbExr6Q4NmZZf4BVaUsQ3KFo2y772tM53YH3hIRaiR02PzcGIwmYf1s9Fsq1HOUa9Mc2E25soNxrg==
   dependencies:
     "@formio/bootstrap3" "2.12.4-rc.1"
     "@formio/choices.js" "10.2.1"
