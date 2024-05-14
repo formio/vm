@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 0.2.0-rc.1]
+## 0.2.0-rc.1
+
+### Changed
+
+-   Updated @formio/core@2.1.0-rc.1
+-   Updated formiojs@4.21.0-rc.1
+-   FIO-8251: added inputmask library
+-   FIO-7488: add timeout to evaluateProcess
 
 ## 0.1.0-rc.2
 
