@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 0.0.9-rc.1]
+## [Unreleased: 1.0.0-rc.1]
 
 ### Changed
 
+-   Upgrade formiojs to @formio/js 5.x version.
 -   FIO-8143: migrate RootShim to eachComponent vs eachComponentData
 -   FIO-8145: injectable deps
 -   add includeAll flag to eachComponent
