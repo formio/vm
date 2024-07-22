@@ -1,6 +1,6 @@
 import _ from 'lodash';
-
 import { Formio, Form } from 'formiojs';
+import * as FormioCore from '@formio/core';
 import { evaluate } from '..';
 
 import macros from './deps/nunjucks-macros';
@@ -49,12 +49,18 @@ export async function renderEmail({
 
         // Set visibility of hidden components.
         // This is necessary to ensure that hidden components are not rendered in the email.
-        if (context?.scope?.clearHidden) {
-            for (const hiddenCompPath in context.scope.clearHidden) {
-                form.getComponent(hiddenCompPath).visible =
-                    !context.scope.clearHidden[hiddenCompPath];
-            }
-        }
+        FormioCore.Utils.eachComponent(
+            form.components,
+            (component: any, path: any) => {
+                const conditionalComp = context?.scope?.conditionals?.find(
+                    (condition: any) => condition.path === path,
+                );
+                const hidden = conditionalComp
+                    ? conditionalComp.conditionallyHidden
+                    : context?.componentsWithPath[path]?.hidden;
+                component.visible = !hidden;
+            },
+        );
 
         const submissionTableHtml = form.getView(context.data, {
             email: true,
