@@ -5,19 +5,10 @@ export const nunjucksCode = fs.readFileSync(
     path.join(__dirname, './assets/nunjucks.min.js'),
     'utf8',
 );
-export const nunjucksDateFilterCode = fs
-    .readFileSync(
-        path.join(__dirname, './assets/nunjucks-date-filter.js'),
-        'utf8',
-    )
-    // Modify internal dependency on nunjucks lib.js from the original require statement to the global nunjucks object
-    .replace(`require('nunjucks/src/lib')`, `nunjucks['lib']`)
-    // Remove 'use strict' and require statements
-    .replace(`'use strict';`, '')
-    .replace(/^.+require.+$/gm, '')
-    // Remove module.exports
-    .replace(`module.exports = dateFilter;`, '')
-    .replaceAll(`module.exports.`, '');
+export const nunjucksDateFilterCode = fs.readFileSync(
+    path.join(__dirname, './assets/nunjucks-date-filter.js'),
+    'utf8',
+);
 
 // Strip away macros and escape breakout attempts.
 const sanitize = (input: any) => {
