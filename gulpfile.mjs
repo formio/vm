@@ -19,6 +19,3 @@ function copyAssets(assetsDir) {
 gulp.task('copy-assets-build', copyAssets('build/core/deps/assets'));
 gulp.task('prebuild', async () => deleteAsync(['build']))
 gulp.task('postbuild', gulp.parallel('copy-assets-build', 'remove-server'));
-
-gulp.task('pretest', copyAssets('src/core/deps/assets'));
-gulp.task('posttest', async () => await deleteAsync(['src/core/deps/assets/*.js']));
