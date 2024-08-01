@@ -14,8 +14,7 @@ var dateFilterDefaultFormat = null;
 // a date filter for Nunjucks
 // usage: {{ my_date | date(format) }}
 // see: <http://momentjs.com/docs/>
-function dateFilter(date, format)
-{
+function dateFilter(date, format) {
     var result;
     var errs = [];
     var args = [];
@@ -31,30 +30,28 @@ function dateFilter(date, format)
             if (obj[format] && nlib.isFunction(obj[format])) {
                 result = obj[format].apply(obj, args.slice(2));
             } else {
-                if (dateFilterDefaultFormat!==null) {
+                if (dateFilterDefaultFormat !== null) {
                     result = obj.format(format || dateFilterDefaultFormat);
                 } else {
                     result = obj.format(format);
                 }
             }
-        } catch(err) {
+        } catch (err) {
             errs.push(err);
         }
     }
 
     if (errs.length) {
-        return errs.join("\n");
+        return errs.join('\n');
     }
     return result;
 }
 
-const defaultExport = {
-    ...dateFilter,
-    setDefaultFormat: function(format) {
-        dateFilterDefaultFormat = format;
-    },
-    install: function(env, customName) {
-        (env || nunjucks.configure()).addFilter(customName || 'date', dateFilter);
-    }
-}
-defaultExport;
+dateFilter.setDefaultFormat = function (format) {
+    dateFilterDefaultFormat = format;
+};
+dateFilter.install = function (env, customName) {
+    (env || nunjucks.configure()).addFilter(customName || 'date', dateFilter);
+};
+
+dateFilter;
