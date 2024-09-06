@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 0.3.0-rc.9
+
+### Changed
+
+-   Updated @formio/core@2.2.2
+-   FIO-8235: add timeout to email rendering
+-   FIO-8626: Fixed hidden components rendering in emal
+
 ## 0.3.0-rc.8
 
 ### Changed
