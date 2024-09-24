@@ -4,6 +4,7 @@ mockBrowserContext();
 import * as FormioCore from '@formio/core';
 
 import { RootShim } from './RootShim';
+import { evaluateSync } from './evaluate.js';
 
 export class InstanceShim {
     public _component: any;
@@ -95,6 +96,16 @@ export class InstanceShim {
             this._data,
             this._path,
         );
+    }
+
+    getDefaultCustomValue() {
+        if (this.component.customDefaultValue) {
+            const defaultValue = evaluateSync({
+                data: this.data,
+                code: this.component.customDefaultValue,
+            });
+            return defaultValue;
+        }
     }
 
     // Do nothing functions.
