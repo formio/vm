@@ -2,6 +2,7 @@ import _ from 'lodash';
 import * as FormioCore from '@formio/core';
 
 import { RootShim } from './RootShim';
+import { evaluateSync } from './evaluate';
 
 export class InstanceShim {
     public _component: any;
@@ -93,6 +94,29 @@ export class InstanceShim {
             this._data,
             this._path,
         );
+    }
+
+    getCustomDefaultValue() {
+        if (this.component.customDefaultValue) {
+            const evaluateContext = {
+                form: this.component,
+                components: this.root.components,
+                submission: this.root.submission,
+                data: this.root.data,
+                scope: {},
+                config: {
+                    server: true,
+                },
+                options: {
+                    server: true,
+                },
+            };
+            const defaultValue = evaluateSync({
+                data: evaluateContext,
+                code: this.component.customDefaultValue,
+            });
+            return defaultValue;
+        }
     }
 
     // Do nothing functions.
