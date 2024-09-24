@@ -69,10 +69,10 @@
     fuse.js "^6.6.2"
     redux "^4.2.0"
 
-"@formio/core@2.2.2":
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.2.2.tgz#3dd6810ccf32b6f8e2e9d97c4d3a385db0f69f0c"
-  integrity sha512-FyvqUS/UEvsUYKLaCw0TegUGyrk7Cz9vnUYfeK9NDnWObFPZFwYVDFcaJoXTttWrLLlPM6+pv2rTtf0dnhpuCg==
+"@formio/core@2.2.3-rc.3":
+  version "2.2.3-rc.3"
+  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.2.3-rc.3.tgz#bad02414336857bc30b29778d8c01bdf68d15660"
+  integrity sha512-NiowKy8D0IhtJQudN/MbiAInR9kiZaYHXCUz9rwJ8tYPKrBJyrHC2pz8JI9NMB1LPrsxecQU9fi0g8YoJ8WeiA==
   dependencies:
     "@types/json-logic-js" "^2.0.7"
     browser-cookies "^1.2.0"
@@ -2887,7 +2887,7 @@ ini@^1.3.4, ini@~1.3.0:
   resolved "https://registry.npmjs.org/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
   integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
-inputmask@5.0.8, inputmask@^5.0.8:
+inputmask@5.0.8:
   version "5.0.8"
   resolved "https://registry.yarnpkg.com/inputmask/-/inputmask-5.0.8.tgz#cd0f70b058c3291a0d4f27de25dbfc179c998bb4"
   integrity sha512-1WcbyudPTXP1B28ozWWyFa6QRIUG4KiLoyR6LFHlpT4OfTzRqFfWgHFadNvRuMN1S9XNVz9CdNvCGjJi+uAMqQ==
