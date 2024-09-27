@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 0.3.0-rc.15
+
+### Changed
+
+-   FIO-8742: add missing nlib depedency to nunjucks injection
+
 ## 0.3.0-rc.14
 
 ### Changed
