@@ -52,9 +52,9 @@ export async function renderEmail({
         FormioCore.Utils.eachComponentData(
             form.component.components,
             context.data,
-            (component: any, data: any, row: any, path: any) => {
+            (component: any) => {
                 const conditionalComp = context?.scope?.conditionals?.find(
-                    (condition: any) => condition.path === path,
+                    (condition: any) => condition.path === component.compPath,
                 );
                 const hidden = conditionalComp
                     ? conditionalComp.conditionallyHidden
