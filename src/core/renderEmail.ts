@@ -82,10 +82,22 @@ export async function renderEmail({
     return res as string;
 }
 
-function getScript(data: any) {
+export function getScript(data: any) {
+    const injectDependencies = `
+    if (_) {
+    environment.addGlobal('_',_)
+    }
+    if (moment) {
+    environment.addGlobal('moment',moment)
+    }
+    if (utils) {
+    environment.addGlobal('utils',utils)
+    }`;
+
     if (_.isString(data)) {
         // Script to render a single string.
         return `
+      ${injectDependencies}
       environment.params = context;
       output = unescape(environment.renderString(sanitize(input), context));
     `;
@@ -93,6 +105,7 @@ function getScript(data: any) {
 
     // Script to render an object of properties.
     return `
+    ${injectDependencies}
     environment.params = context;
     var rendered = {};
     for (let prop in input) {
