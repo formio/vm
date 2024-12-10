@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 1.0.0-rc.4]
+### Changed
+ - FIO-9021: Fixed hidden nested form components rendering in email
+ - FIO-9064: update customDefaultValue method
+ - FIO-9064: add getCustomDefaultValue method to InstanceShim, add globally configured timeout
+ - FIO-8250 updated inputmask lib
+
 ## 1.0.0-rc.1
 
 ### Changed
