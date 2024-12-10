@@ -97,6 +97,32 @@ export class InstanceShim {
         );
     }
 
+    getCustomDefaultValue() {
+        if (this.component.customDefaultValue) {
+            const evaluationContext = {
+                form: this.root.form,
+                component: this.component,
+                submission: this.root.submission,
+                data: this.root.data,
+                config: {
+                    server: true,
+                },
+                options: {
+                    server: true,
+                },
+                value: null,
+                util: FormioCore.Utils,
+                utils: FormioCore.Utils,
+            };
+            const defaultValue = FormioCore.JSONLogicEvaluator.evaluate(
+                this.component.customDefaultValue,
+                evaluationContext,
+                'value',
+            );
+            return defaultValue;
+        }
+    }
+
     // Do nothing functions.
     on() {}
     off() {}
