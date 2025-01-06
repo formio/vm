@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 0.3.1-rc.1
+
+### Changed
+
+-   Updated @formio/core@2.3.2-rc.1
+-   Updated formiojs@4.21.6
+
 ## 0.3.0
 
 ### Changed
