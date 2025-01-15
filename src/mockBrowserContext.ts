@@ -7,6 +7,7 @@ export default function mockBrowserContext() {
     if (!globalThis.HTMLInputElement) globalThis.HTMLInputElement = class {};
     if (!globalThis.HTMLTextAreaElement)
         globalThis.HTMLTextAreaElement = class {};
+    if (!globalThis.NodeList) globalThis.NodeList = class {};
     if (!globalThis.navigator) globalThis.navigator = { userAgent: '' };
     if (!globalThis.document) globalThis.document = {};
     if (!globalThis.document.createElement)
