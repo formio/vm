@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import * as FormioCore from '@formio/core';
 import { Formio, Form } from 'formiojs';
 import { evaluate } from '..';
 
@@ -45,6 +46,18 @@ export async function renderEmail({
         }).ready;
 
         form.setValue({ data: context.data }, { sanitize: true });
+        // Set visibility of hidden components.
+        // This is necessary to ensure that hidden components are not rendered in the email.
+        FormioCore.Utils.eachComponentData(form.component.components, context.data, (component: any) => {
+            const conditionalComp = context?.scope?.conditionals?.find((condition: any) => condition.path === component.compPath);
+            const hidden = conditionalComp
+                ? conditionalComp.conditionallyHidden
+                : context?.componentsWithPath[component.compPath]?.hidden;
+            const componentInstance = form.getComponent(component.compPath);
+            if (componentInstance) {
+                componentInstance.visible = !hidden;
+            }
+        });
 
         // this is a hack to ensure the form is fully rendered before we get the form html
         // ideally, we'd have a promise from the renderer that we can await to ensure the form is fully rendered
