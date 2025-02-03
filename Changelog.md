@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 1.0.0-rc.13]
+## 1.0.0-rc.13
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.7
+- Updated @formio/js@5.1.0-rc.10
 
 - FIO-9508: update InstanceShim to respect new pathing options
 
