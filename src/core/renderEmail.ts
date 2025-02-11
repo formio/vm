@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import * as FormioCore from '@formio/core';
 import { Formio, Form } from '@formio/js';
 import { evaluate } from '..';
 
@@ -43,6 +42,7 @@ export async function renderEmail({
             server: true,
             noeval: true,
             noDefaults: true,
+            submissionTimezone: context?.metadata?.timezone,
         }).ready;
 
         form.setValue({ data: context.data }, { sanitize: true });
