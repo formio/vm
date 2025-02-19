@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 
 import { evaluate } from '../evaluate';
+import { getScript } from '../renderEmail';
 
 describe('Test evaluate', () => {
     it('should evaluate simple code with lodash', async () => {
@@ -19,6 +20,58 @@ describe('Test evaluate', () => {
             code: 'moment(0).utc().format("YYYY-MM-DD")',
         });
         expect(result).to.equal('1970-01-01');
+    });
+
+    it('should evaluate emails messages with nunjucks (which uses core logic inside)', async () => {
+        const data = {
+            context: {
+                form: {
+                    components: [
+                        {
+                            collapsible: false,
+                            key: 'panel',
+                            label: 'Panel',
+                            type: 'panel',
+                            input: false,
+                            tableView: false,
+                            components: [
+                                {
+                                    label: 'Text Field',
+                                    applyMaskOn: 'change',
+                                    tableView: true,
+                                    customDefaultValue: 'HI',
+                                    validateWhenHidden: false,
+                                    key: 'textField',
+                                    type: 'textfield',
+                                    input: true,
+                                    compPath: 'textField',
+                                },
+                            ],
+                        },
+                    ],
+                },
+                content:
+                    "{{utils.getComponent(form.components, 'panel', true).label}}",
+            },
+            input: {
+                from: 'no-reply@example.com',
+                to: 'to@example.com',
+                subject: 'New submission for ',
+                html: '<!doctype html><html><body><p>{{ content }}</p></body></html>',
+                msgTransport: 'smtp',
+                transport: 'smtp',
+                renderingMethod: 'dynamic',
+            },
+        };
+        const result = (await evaluate({
+            deps: ['lodash', 'core', 'moment', 'nunjucks'],
+            data: data,
+            code: getScript(data.input),
+        })) as Record<string, any>;
+
+        const match = result!.html.match(/\bPanel\b/g);
+        expect(!!match).to.equal(true);
+        expect(match[0]).to.equal('Panel');
     });
 
     it('should evaluate simple code with core', async () => {
