@@ -19,15 +19,21 @@ export class RootShim {
             form.components,
             submission.data,
             (
-                component: FormioCore.Component,
-                data: any,
-                row: any,
-                compPath: any,
-                components: any,
-                index: any,
-                parent: any,
-                paths: FormioCore.ComponentPaths,
+                component,
+                data,
+                row,
+                compPath,
+                components,
+                index,
+                parent,
+                paths,
             ) => {
+                if (!paths) {
+                    console.warn(
+                        'Did not have component paths in RootShim constructor',
+                    );
+                    paths = FormioCore.Utils.getComponentPaths(component);
+                }
                 const {
                     path,
                     fullPath,
