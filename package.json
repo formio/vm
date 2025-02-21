@@ -14,7 +14,7 @@
         "LICENSE.txt"
     ],
     "dependencies": {
-        "@formio/core": "2.4.0-dev.2",
+        "@formio/core": "2.4.0-dev.221.e0c6673",
         "@formio/js": "5.1.0-dev.5977.69f20ee",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
