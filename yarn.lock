@@ -67,7 +67,24 @@
     fuse.js "^6.6.2"
     redux "^4.2.0"
 
-"@formio/core@2.4.0-dev.2", "@formio/core@v2.4.0-dev.2":
+"@formio/core@2.4.0-dev.221.e0c6673":
+  version "2.4.0-dev.221.e0c6673"
+  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.4.0-dev.221.e0c6673.tgz#e04cb03331045cbc809b4b8a321618d3fda528dd"
+  integrity sha512-Ly6cYcDfdPMuTonkmWQkJZLmvZHF2UfCpg+vb35CkIZIeckZ0aDfTooO09MIm+lMHjxab/QAxfPr2NaDau0Nkw==
+  dependencies:
+    browser-cookies "^1.2.0"
+    core-js "^3.39.0"
+    dayjs "^1.11.12"
+    dompurify "^3.2.3"
+    eventemitter3 "^5.0.0"
+    fast-json-patch "^3.1.1"
+    fetch-ponyfill "^7.1.0"
+    inputmask "5.0.9"
+    json-logic-js "^2.0.5"
+    lodash "^4.17.21"
+    moment "^2.29.4"
+
+"@formio/core@v2.4.0-dev.2":
   version "2.4.0-dev.2"
   resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.4.0-dev.2.tgz#30ebab054e602c5ce7f487d853d195887e0f62b9"
   integrity sha512-rodSO272z/bUqOulrCx1mkpCsuW7AHjcxV9tX5Ob7F97JV/6lxtsvxrmhPWFS63yXnecreZO5v67xrcHxBWVMg==
