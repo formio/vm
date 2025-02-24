@@ -6,11 +6,15 @@ import * as FormioCore from '@formio/core';
 import { RootShim } from './RootShim';
 
 export class InstanceShim {
-    public _component: any;
-    public _root: any;
-    public _data: any;
-    public _path: string;
-    public _rowIndex: number | null;
+    private _component: any;
+    private _root: any;
+    private _data: any;
+    private _path: string;
+    private _rowIndex: number | null;
+    private _conditionals: Array<{
+        path: string;
+        conditionallyHidden: boolean;
+    }>;
 
     constructor(
         component: any,
@@ -18,12 +22,14 @@ export class InstanceShim {
         data: any,
         path: string = component.path || component.key,
         dataIndex: number | null = null,
+        scope: any,
     ) {
         this._component = component;
         this._root = root;
         this._data = data;
         this._path = path;
         this._rowIndex = dataIndex;
+        this._conditionals = scope.conditionals || [];
     }
 
     get root() {
@@ -74,6 +80,16 @@ export class InstanceShim {
     // Returns component value
     get dataValue() {
         return _.get(this._data, this._path);
+    }
+
+    get visible() {
+        return !_.some(
+            this._conditionals || [],
+            (condComp) =>
+                condComp.conditionallyHidden &&
+                (condComp.path === this._path ||
+                    _.startsWith(condComp.path, this._path)),
+        );
     }
 
     // Question: Should we allow this?

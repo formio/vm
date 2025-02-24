@@ -4,7 +4,7 @@ import { RootShim } from './RootShim';
 import { globalTimeout } from './configureVm';
 
 const code = `
-root = new RootShim(context.form, context.submission);
+root = new RootShim(context.form, context.submission, context.scope);
 context.instances = root.instanceMap;
 data = context.data;
 
@@ -103,7 +103,7 @@ export async function evaluateProcessMocked(
             server: true,
         },
     };
-    const root = new RootShim(context.form, context.submission);
+    const root = new RootShim(context.form, context.submission, context.scope);
     context.instances = root.instanceMap;
     const data = context.data;
 

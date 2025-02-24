@@ -8,13 +8,15 @@ export class RootShim {
 
     private _form: any;
     private _submission: any;
+    private _scope: any;
 
-    constructor(form: any, submission: any) {
+    constructor(form: any, submission: any, scope?: any) {
         this.instanceMap = {};
         this._form = form;
         this._submission = submission;
         this.data = submission.data;
         this.components = [];
+        this._scope = scope || {};
         FormioCore.Utils.eachComponentData(
             form.components,
             submission.data,
@@ -41,6 +43,7 @@ export class RootShim {
                     submission.data,
                     dataPath ?? path ?? component.key,
                     index,
+                    this._scope,
                 );
                 this.components.push(instance);
                 if (path && !this.instanceMap[path]) {
