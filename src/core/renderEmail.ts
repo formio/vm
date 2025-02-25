@@ -1,15 +1,17 @@
-import _ from 'lodash';
 import {
   ProcessorContext,
   ProcessorFn,
   ProcessorFnSync,
   ProcessorInfo,
   ProcessorScope,
-  Utils,
   processSync,
 } from '@formio/core';
-import { evaluate } from '..';
+import { formatAddressValue, formatCurrency, formatDatetime, formatTime, renderRow, renderTable, renderSurveyTable, renderDataMapTable } from './renderEmailUtils';
 
+import { JSDOM } from 'jsdom';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import _ from 'lodash';
+import { evaluate } from '..';
 import macros from './deps/nunjucks-macros';
 
 export type RenderEmailOptions = {
@@ -19,10 +21,17 @@ export type RenderEmailOptions = {
 };
 
 const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
-  const { component, paths, parent, scope, data } = context;
-  if (!(scope as any).renderEmail) {
-    (scope as any).renderEmail = '';
+  const { component, paths, parent, row, scope, data } = context;
+  // if ((component as any).skipInEmail) return;
+  if (!(scope as any).emailDom) {
+    (scope as any).emailDom = new JSDOM(`
+        <table border="1" style="width:100%">
+          <tbody id="main">
+          </tbody>
+        </table>
+      `);
   }
+  const document = (scope as any).emailDom.window.document;
   const scopeRef = scope as any;
   if (
     scopeRef.conditionals.find(
@@ -31,41 +40,149 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
   ) {
     return;
   }
+
+  const language = (context as any)?.metadata?.language;
+
   let result = '';
 
-  switch (Utils.getModelType(component)) {
-    case 'dataObject':
-    case 'nestedArray':
-    case 'nestedDataArray': {
-      result += `
-          <table border="1" style="width:100%">
-            <tbody>
-              <child />
-            </tbody>
-          </table>
-        `;
+  const rowValue: any = _.get(data, paths?.dataPath ?? component.key);
+
+  switch (component.type) {
+    case 'textfield':
+    case 'number':
+    case 'password':
+    
+    case 'select':
+    case 'radio':
+    case 'email':
+    case 'url':
+    case 'phoneNumber':
+    case 'day':
+    case 'tags': {
+      const outputValue = component.multiple ? rowValue?.join(', ') : rowValue;
+      result = renderRow(outputValue, component);
       break;
     }
-    case 'number':
-    case 'boolean':
-    case 'string': {
-      result += `<tr>
-        <th style="padding: 5px 10px;">${component.label || component.key}</th>
-        <td style="width:100%;padding:5px 10px;">${_.get(
-          data,
-          paths?.fullPath ?? component.key,
-        )}</td>
-      </tr>`;
+    case 'checkbox': {
+      // TODO: translation
+      result = renderRow(rowValue ? 'Yes' : 'No', component);
+      break;
+    }
+    case 'textarea': {
+      const outputValue = component.multiple ?  
+        rowValue?.map((v: string) => v.replace(/\n/g, ' ')).join(', ') :
+        rowValue;
+      result = renderRow(outputValue, component);
+      break;
+    }
+    case 'selectboxes': {
+      const outputValue = (component as any).values?.filter((v: any) => rowValue[v.value])
+        .map((v: any) => v.label)
+        .join(', ');
+      result = renderRow(outputValue, component);
+      break;
+    }
+    case 'address': {
+      const outputValue = component.multiple ?
+        rowValue?.map((v: any) => formatAddressValue(v, component, data)).join(', ') :
+        formatAddressValue(rowValue, component, data);
+      result = renderRow(outputValue, component);
+      break;
+    }
+    case 'datetime': {
+      const outputValue = component.multiple ?
+        rowValue?.map((v: any) => formatDatetime(v, component)).join(', ') :
+        formatDatetime(rowValue, component);
+      result = renderRow(outputValue, component);
+      break;
+    }
+    case 'time': {
+      const outputValue = component.multiple ?
+        rowValue?.map((v: any) => formatTime(v, component)).join(', ') :
+        formatDatetime(rowValue, component);
+      result = renderRow(outputValue, component);
+      break;
+    }
+    case 'currency': {
+      const outputValue = component.multiple ? 
+        rowValue?.map((v: any) => formatCurrency(v, component)).join(', ') : 
+        formatCurrency(rowValue, component);
+      result = renderRow(outputValue, component);
+      break;
+    }
+    case 'survey': {
+      result = renderSurveyTable(rowValue, component, data, row, paths, language);
+      break;
+    }
+    case 'signature':
+      // TODO: translation
+      result = renderRow(rowValue ? 'Yes' : 'No', component);
+      break;
+    // data components
+    case 'datamap': {
+      result = renderDataMapTable(rowValue, component, paths);
+      break;
+    }
+    // case 'datagrid':
+    // case 'editgrid':
+
+
+    // premium components
+    // case 'datasource': N/A (pretty sure)
+    // case 'captcha': // we don't want this 99% sure (N/A)
+    //TODO: look into how options.review works for file components
+    case 'file': {
+      const outputValue = _.isArray(rowValue) ? 
+        rowValue?.map((v: any) => v?.originalName).join(', ') : 
+        rowValue?.originalName;
+      result = renderRow(outputValue, component);
+      break;
+    }
+    // case 'sketchpad':
+    // case 'tagpad':
+    // case 'datatable':
+    // case 'reviewpage':
+    // case 'custom':
+    // form components
+    case 'form':
+    // case 'container':
+          // TODO: broken
+    case 'dynamicWizard': {
+      // we don't currently handle double+ nested forms
+      if (parent?.type === 'form') {
+        result = renderRow((component as any).form, component);
+        break;
+      }
+      result = renderTable(component, paths, '.data');
+      break;
+    }
+    case 'container': {
+      result = renderTable(component, paths);
       break;
     }
     default:
       break;
   }
+  //TODO: verify how current implementation handles empty form values
+  if (!result) return;
 
-  if (!parent) {
-    (scope as any).renderEmail += result;
-  } else {
-    (scope as any).renderEmail = (scope as any).renderEmail.replace('<child />', result);
+  // if the component's parent is a layout component and isn't nested
+  // there will be no nested property path, which would include "."
+  if (!parent || !paths?.dataPath?.includes('.')) {
+    const mainTable = document.getElementById('main');
+    mainTable.insertAdjacentHTML('beforeend', result);
+  } 
+  else {
+    // remove the component key from the data path
+    // when rendering the parent table html, we only have
+    const dataPath = paths?.dataPath;
+    const parentPath = dataPath?.includes('.') 
+    ? dataPath.substring(0, dataPath.lastIndexOf('.')) 
+    : dataPath;
+    const parentTable = document.getElementById(`${parentPath ?? parent.key}`);
+    if (parentTable) {
+      parentTable.insertAdjacentHTML('beforeend', result);
+    }
   }
 };
 
@@ -104,9 +221,7 @@ export async function renderEmail({
       components: context.form.components,
       processors: [renderEmailProcessorInfo],
     });
-    data.submissionTableHtml = `<table border="1" style="width:100%"><tbody>${
-      (result as any).renderEmail
-    }</tbody></table>`;
+    data.submissionTableHtml = (result as any).emailDom.window.document.body.innerHTML;
   }
 
   const res = await evaluate({
