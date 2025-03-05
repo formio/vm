@@ -170,4 +170,47 @@ describe('getComponent', () => {
             root.getComponent('dataGrid[1].textField2').component.key,
         ).to.be.equal('textField2');
     });
+
+    it('Returned component should have visible option (true if not hidden)', () => {
+        const component = {
+            type: 'textfield',
+            key: 'textField',
+            label: 'Text Field',
+            input: true,
+        };
+        const components = [component];
+        const data = {
+            textField: '123',
+        };
+        const scope = {
+            conditionals: [{ conditionallyHidden: false, path: 'textField' }],
+        };
+        const root = new RootShim({ components }, { data }, scope);
+        const notHiddenComponent = root.getComponent('textField');
+        expect(notHiddenComponent).to.be.instanceOf(InstanceShim);
+        expect(notHiddenComponent.visible).to.be.equal(true);
+    });
+
+    it('Returned component should have visible option (false if hidden)', () => {
+        const component = {
+            type: 'textfield',
+            key: 'textField',
+            label: 'Text Field',
+            input: true,
+        };
+
+        const components = [component];
+        const data = {
+            textField: '123',
+        };
+
+        const scope = {
+            conditionals: [{ conditionallyHidden: true, path: 'textField' }],
+        };
+        const root = new RootShim({ components }, { data }, scope);
+
+        const hiddenComponent = root.getComponent('textField');
+        expect(hiddenComponent).to.be.instanceOf(InstanceShim);
+        expect(hiddenComponent.visible).to.be.equal(false);
+    });
 });
