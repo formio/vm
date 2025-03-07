@@ -2,12 +2,8 @@ import { instanceShimCode } from './InstanceShim';
 import { lodashCode } from './deps/lodash';
 import { momentCode } from './deps/moment';
 import { inputmaskCode } from './deps/inputmask';
-import {
-    polyfillCode,
-    aliasesCode,
-    coreCode,
-    fastJsonPatchCode,
-} from './deps/core';
+import { polyfillCode } from './deps/polyfill';
+import { aliasesCode, coreCode, fastJsonPatchCode } from './deps/core';
 import {
     nunjucksCode,
     nunjucksDateFilterCode,
@@ -17,6 +13,7 @@ import { nunjucksUtilsCode } from './deps/nunjucks-utils';
 
 // Dependency name corresponds to list of libraries to load when that dependency is requested
 export const dependeciesMap = {
+    polyfill: [polyfillCode],
     lodash: [lodashCode],
     moment: [momentCode],
     inputmask: [inputmaskCode],
@@ -33,6 +30,7 @@ export const dependeciesMap = {
 export let globalTimeout = 500;
 
 type BaseDependencyMap = {
+    polyfill?: string;
     lodash?: string;
     moment?: string;
     inputmask?: string;
@@ -52,6 +50,7 @@ type VmOptions = {
  */
 export const configureVm = ({
     dependencies: {
+        polyfill,
         lodash,
         moment,
         inputmask,
@@ -62,13 +61,15 @@ export const configureVm = ({
     },
     timeout,
 }: VmOptions) => {
+    if (polyfill) {
+        dependeciesMap.polyfill = [polyfill];
+    }
     if (lodash) {
         dependeciesMap.lodash = [lodash];
     }
     if (moment) {
         dependeciesMap.moment = [moment];
     }
-
     if (inputmask) {
         dependeciesMap.inputmask = [inputmask];
     }
