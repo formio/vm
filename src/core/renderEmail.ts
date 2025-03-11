@@ -45,7 +45,10 @@ export async function renderEmail({
             submissionTimezone: context?.metadata?.timezone,
         }).ready;
 
-        form.setValue({ data: context.data }, { sanitize: true });
+        form.setValue(
+            { data: context.data, metadata: context.metadata },
+            { sanitize: true },
+        );
 
         // this is a hack to ensure the form is fully rendered before we get the form html
         // ideally, we'd have a promise from the renderer that we can await to ensure the form is fully rendered
