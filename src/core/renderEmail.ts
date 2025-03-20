@@ -6,7 +6,19 @@ import {
   ProcessorScope,
   processSync,
 } from '@formio/core';
-import { formatAddressValue, formatCurrency, formatDatetime, formatTime, renderRow, renderTable, renderSurveyTable, renderDataMapTable } from './renderEmailUtils';
+import {
+  formatAddressValue,
+  formatCurrency,
+  formatDatetime,
+  formatTime,
+  insertDataMapTable,
+  insertGridTable,
+  insertRow,
+  insertSketchpadTable,
+  insertSurveyTable,
+  insertTable,
+  isLayoutComponent,
+} from './renderEmailUtils';
 
 import { JSDOM } from 'jsdom';
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -22,7 +34,7 @@ export type RenderEmailOptions = {
 
 const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
   const { component, paths, parent, row, scope, data } = context;
-  // if ((component as any).skipInEmail) return;
+  if ((component as any).skipInEmail || isLayoutComponent(component)) return;
   if (!(scope as any).emailDom) {
     (scope as any).emailDom = new JSDOM(`
         <table border="1" style="width:100%">
@@ -43,15 +55,29 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
 
   const language = (context as any)?.metadata?.language;
 
-  let result = '';
-
   const rowValue: any = _.get(data, paths?.dataPath ?? component.key);
+
+  // remove the component key from the data path
+  // to match it to the id of the parent table
+  // TODO: handle nested edit grids, etc
+  const dataPath = paths?.dataPath;
+  const parentId = dataPath?.includes('.')
+    ? dataPath.substring(0, dataPath.lastIndexOf('.')).replace(/\.data\b/g, '')
+    : dataPath;
+  const componentRenderContext = {
+    component,
+    data,
+    row,
+    paths,
+    parentId: !parent ? 'main' : parentId,
+    document,
+    language,
+  };
 
   switch (component.type) {
     case 'textfield':
     case 'number':
     case 'password':
-    
     case 'select':
     case 'radio':
     case 'email':
@@ -60,129 +86,116 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
     case 'day':
     case 'tags': {
       const outputValue = component.multiple ? rowValue?.join(', ') : rowValue;
-      result = renderRow(outputValue, component);
-      break;
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
     case 'checkbox': {
       // TODO: translation
-      result = renderRow(rowValue ? 'Yes' : 'No', component);
-      break;
+      insertRow(rowValue ? 'Yes' : 'No', componentRenderContext);
+      return;
     }
     case 'textarea': {
-      const outputValue = component.multiple ?  
-        rowValue?.map((v: string) => v.replace(/\n/g, ' ')).join(', ') :
-        rowValue;
-      result = renderRow(outputValue, component);
-      break;
+      const outputValue = component.multiple
+        ? rowValue?.map((v: string) => v.replace(/\n/g, ' ')).join(', ')
+        : rowValue;
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
     case 'selectboxes': {
-      const outputValue = (component as any).values?.filter((v: any) => rowValue[v.value])
+      const outputValue = (component as any).values
+        ?.filter((v: any) => rowValue[v.value])
         .map((v: any) => v.label)
         .join(', ');
-      result = renderRow(outputValue, component);
-      break;
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
     case 'address': {
-      const outputValue = component.multiple ?
-        rowValue?.map((v: any) => formatAddressValue(v, component, data)).join(', ') :
-        formatAddressValue(rowValue, component, data);
-      result = renderRow(outputValue, component);
-      break;
+      const outputValue = component.multiple
+        ? rowValue?.map((v: any) => formatAddressValue(v, component, data)).join(', ')
+        : formatAddressValue(rowValue, component, data);
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
     case 'datetime': {
-      const outputValue = component.multiple ?
-        rowValue?.map((v: any) => formatDatetime(v, component)).join(', ') :
-        formatDatetime(rowValue, component);
-      result = renderRow(outputValue, component);
-      break;
+      const outputValue = component.multiple
+        ? rowValue?.map((v: any) => formatDatetime(v, component)).join(', ')
+        : formatDatetime(rowValue, component);
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
     case 'time': {
-      const outputValue = component.multiple ?
-        rowValue?.map((v: any) => formatTime(v, component)).join(', ') :
-        formatDatetime(rowValue, component);
-      result = renderRow(outputValue, component);
-      break;
+      const outputValue = component.multiple
+        ? rowValue?.map((v: any) => formatTime(v, component)).join(', ')
+        : formatDatetime(rowValue, component);
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
     case 'currency': {
-      const outputValue = component.multiple ? 
-        rowValue?.map((v: any) => formatCurrency(v, component)).join(', ') : 
-        formatCurrency(rowValue, component);
-      result = renderRow(outputValue, component);
-      break;
+      const outputValue = component.multiple
+        ? rowValue?.map((v: any) => formatCurrency(v, component)).join(', ')
+        : formatCurrency(rowValue, component);
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
     case 'survey': {
-      result = renderSurveyTable(rowValue, component, data, row, paths, language);
-      break;
+      insertSurveyTable(rowValue, componentRenderContext);
+      return;
     }
     case 'signature':
       // TODO: translation
-      result = renderRow(rowValue ? 'Yes' : 'No', component);
-      break;
-    // data components
+      insertRow(rowValue ? 'Yes' : 'No', componentRenderContext);
+      return;
     case 'datamap': {
-      result = renderDataMapTable(rowValue, component, paths);
-      break;
+      insertDataMapTable(rowValue, componentRenderContext);
+      return;
     }
-    // case 'datagrid':
-    // case 'editgrid':
-
-
+    // case 'datagrid': {
+    //   insertTable(componentRenderContext);
+    //   return;
+    // }
+    case 'editgrid': {
+      insertGridTable(componentRenderContext);
+      return;
+    }
     // premium components
     // case 'datasource': N/A (pretty sure)
-    // case 'captcha': // we don't want this 99% sure (N/A)
     //TODO: look into how options.review works for file components
     case 'file': {
-      const outputValue = _.isArray(rowValue) ? 
-        rowValue?.map((v: any) => v?.originalName).join(', ') : 
-        rowValue?.originalName;
-      result = renderRow(outputValue, component);
-      break;
+      const outputValue = _.isArray(rowValue)
+        ? rowValue?.map((v: any) => v?.originalName).join(', ')
+        : rowValue?.originalName;
+      insertRow(outputValue, componentRenderContext);
+      return;
     }
-    // case 'sketchpad':
-    // case 'tagpad':
+    case 'sketchpad': {
+      insertSketchpadTable(componentRenderContext);
+      return;
+    }
+    case 'tagpad': {
+      insertGridTable(componentRenderContext);
+      return;
+    }
     // case 'datatable':
     // case 'reviewpage':
     // case 'custom':
     // form components
     case 'form':
-    // case 'container':
-          // TODO: broken
     case 'dynamicWizard': {
       // we don't currently handle double+ nested forms
       if (parent?.type === 'form') {
-        result = renderRow((component as any).form, component);
-        break;
+        const outputValue = (component as any).form;
+        insertRow(outputValue, componentRenderContext);
+        return;
       }
-      result = renderTable(component, paths, '.data');
-      break;
+      insertTable(componentRenderContext);
+      return;
     }
     case 'container': {
-      result = renderTable(component, paths);
-      break;
+      insertTable(componentRenderContext);
+      return;
     }
     default:
-      break;
-  }
-  //TODO: verify how current implementation handles empty form values
-  if (!result) return;
-
-  // if the component's parent is a layout component and isn't nested
-  // there will be no nested property path, which would include "."
-  if (!parent || !paths?.dataPath?.includes('.')) {
-    const mainTable = document.getElementById('main');
-    mainTable.insertAdjacentHTML('beforeend', result);
-  } 
-  else {
-    // remove the component key from the data path
-    // when rendering the parent table html, we only have
-    const dataPath = paths?.dataPath;
-    const parentPath = dataPath?.includes('.') 
-    ? dataPath.substring(0, dataPath.lastIndexOf('.')) 
-    : dataPath;
-    const parentTable = document.getElementById(`${parentPath ?? parent.key}`);
-    if (parentTable) {
-      parentTable.insertAdjacentHTML('beforeend', result);
-    }
+      return;
   }
 };
 

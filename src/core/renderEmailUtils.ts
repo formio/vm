@@ -1,6 +1,11 @@
-import { ComponentPath, I18n, Utils, convertFormatToMoment, currentTimezone, momentDate } from '@formio/core';
-import { JSDOM } from 'jsdom';
- 
+import {
+  I18n,
+  convertFormatToMoment,
+  coreEnTranslation,
+  currentTimezone,
+  momentDate,
+} from '@formio/core';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import _ from 'lodash';
 import moment from 'moment';
@@ -10,14 +15,27 @@ export const t = (text: any, language: any, params: any = {}, ...args: []) => {
     return '';
   }
   // Use _userInput: true to ignore translations from defaults
-  // if (text in enTranslation && params._userInput) {
-  //   return text;
-  // }
+  if (text in coreEnTranslation && params._userInput) {
+    return text;
+  }
   const i18n = I18n.init(language);
   params.data = params.data;
   params.row = params.row;
   params.component = params.component;
   return i18n.t(text, params, ...args);
+};
+
+export const isLayoutComponent = (component: any) => {
+  return [
+    'panel',
+    'table',
+    'columns',
+    'fieldset',
+    'tabs',
+    'well',
+    'htmlelement',
+    'content',
+  ].includes(component.type);
 };
 
 const isValueInLegacyFormat = (value: any) => {
@@ -98,6 +116,7 @@ export const formatAddressValue = (value: any, component: any, data: any): strin
 
 export const formatCurrency = (value: any, component: any) => {
   const currency = component.currency;
+  // TODO: handle empty vals
   return currency
     ? Number(value).toLocaleString(undefined, {
         style: 'currency',
@@ -127,8 +146,18 @@ export const formatTime = (value: any, component: any) => {
   return moment(value as any, dataFormat).format(format);
 };
 
-export const renderRow = (value: any, component?: any, label?: any) => {
-  return `
+export const insertRow = (
+  value: any,
+  componentRenderContext: any,
+  label?: any,
+  noInsert?: boolean,
+) => {
+  const { component, parentId, document } = componentRenderContext;
+  if (/^.*\[\d+\]$/.test(parentId)) {
+    insertGridRow(value, componentRenderContext);
+    return;
+  }
+  const html = `
     <tr>
       <th style="padding: 5px 10px;">${label ?? component?.label ?? component?.key ?? ''}</th>
       <td style="width:100%;padding:5px 10px;">
@@ -136,56 +165,217 @@ export const renderRow = (value: any, component?: any, label?: any) => {
       </td>
     </tr>
   `;
+  if (noInsert) return html;
+  const nonIndexedPath = parentId.replace(/\[\d+\]/g, '');
+  insertHtml(html, nonIndexedPath, document);
 };
 
+const insertGridHeader = ({ component, data, row, paths, document }: any, rootComponentId: any) => {
+  const existingHeadValue = document.getElementById(component.compPath);
+  if (!existingHeadValue) {
+    const headValue = `
+      <th id="${component.compPath}">${t(component.label, {
+        data,
+        row,
+        paths,
+        _userInput: true,
+      })}
+      </th>`;
+    const modifiedParentId = `${rootComponentId}-thead`;
+    insertHtml(headValue, modifiedParentId, document);
+  }
+};
 
-export const renderTable = (component: any, paths: any, pathSuffix?: any, rows?: any, tHead?: any) => {  
-  return `
+const insertGridHtml = (
+  document: any,
+  childHtml: any, // child row or child table
+  rootComponentId: any,
+  dataIndex: any,
+) => {
+  const childRowId = `${rootComponentId}-childRow${dataIndex}`;
+  const existingChildRow = document.getElementById(childRowId);
+  // this check won't work if there's any tagpad anywhere on the doc...
+  const isTagPadChild = document.getElementById('tagpad-dots');
+
+  const rowValue = `
+    ${!existingChildRow ? `<tr id="${rootComponentId}-childRow${dataIndex}">` : ''}
+        ${
+          !existingChildRow && isTagPadChild
+            ? `<td id="${dataIndex}-tdIndex" style="text-align: center">${dataIndex}</td>`
+            : ''
+        }
+        ${childHtml}
+      ${!existingChildRow ? `</tr>` : ''}`;
+
+  insertHtml(rowValue, existingChildRow ? childRowId : rootComponentId, document);
+};
+
+export const insertGridRow = (
+  value: any,
+  { component, data, row, parentId, paths, document }: any,
+) => {
+  const rootComponentId = parentId.replace(/\[\d+\]/g, '').replace(/\[\d+\]/g, '');
+  insertGridHeader({ component, data, row, paths, document }, rootComponentId);
+  const dataIndex = paths?.dataIndex + 1;
+  const childValue = `<td style="text-align: center">${value}</td>`;
+  insertGridHtml(document, childValue, rootComponentId, dataIndex);
+};
+
+export const insertTable = (
+  { component, data, row, parentId, document, paths }: any,
+  rows?: any,
+  tHead?: any,
+) => {
+  const modifiedComponentPath = paths?.dataPath?.replace(/\.data\b/g, '');
+  // match tagpad[0] or editgrid[1] etc
+  if (/^.*\[\d+\]$/.test(parentId)) {
+    insertGridChildTable(
+      {
+        component,
+        data,
+        row,
+        paths,
+        parentId,
+        document,
+      },
+      rows,
+      tHead,
+    );
+    return;
+  }
+  const html = `
     <tr>
       <th style="padding: 5px 10px;">${component.label ?? component.key}</th>
       <td style="width:100%;padding:5px 10px;">
         <table border="1" style="width:100%">
           ${tHead ?? ''}
-          <tbody id="${paths?.dataPath}${pathSuffix ?? ''}">
+          <tbody id="${modifiedComponentPath}">
             ${rows ?? ''}
           </tbody>
         </table>
       </td>
     </tr>
   `;
+  insertHtml(html, parentId, document);
 };
 
-export const renderSurveyTable = (value: any, component: any, data: any, row: any, paths: any, language: any) => {  
+export const insertGridChildTable = (
+  { component, data, row, parentId, paths, document }: any,
+  rows?: any,
+  tHead?: any,
+) => {
+  const rootComponentId = parentId.replace(/\[\d+\]/g, '');
+  insertGridHeader({ component, data, row, paths, document }, rootComponentId);
+  const childTable = `
+    <td style="text-align: center">
+      <table border="1" style="width:100%">
+        ${tHead ?? ''}
+        <tbody id="${parentId}">
+        ${rows ?? ''}
+        </tbody>
+      </table>
+    </td>
+  `;
+  const dataIndex = paths?.dataIndex + 1;
+  insertGridHtml(document, childTable, rootComponentId, dataIndex);
+};
+
+export const insertSketchpadTable = ({
+  component,
+  data,
+  row,
+  parentId,
+  paths,
+  document,
+  language = 'en',
+}: any) => {
+  const tHead = `
+    <thead>
+      <tr><th>${t(component.label, { data, row, component, _userInput: true })}</th>${t(
+        'complexData',
+        language,
+        { data, row, component },
+      )}</tr>
+    </thead>
+  `;
+  insertTable({ component, parentId, document, paths }, undefined, tHead);
+};
+
+export const insertGridTable = ({
+  component,
+  data,
+  row,
+  parentId,
+  document,
+  paths,
+  language = 'en',
+}: any) => {
+  const modifiedComponentPath = paths?.dataPath?.replace(/\.data\b/g, '').replace(/\[\d+\]/g, '');
+  const tHead = `
+    <thead>
+      <tr id="${modifiedComponentPath}-thead">
+        ${
+          component.type === 'tagpad'
+            ? `<th id="tagpad-dots">${t('dots', language, { data, row, paths })}</th>`
+            : ''
+        }
+      </tr>
+    </thead>
+  `;
+  insertTable({ component, parentId, document, paths }, undefined, tHead);
+};
+
+export const insertSurveyTable = (
+  value: any,
+  { component, data, row, parentId, document, paths, language = 'en' }: any,
+) => {
   const tHead = `             
     <thead>
       <tr>
-        <th>${t('surveyQuestion', language, {data, row, component})}</th>
-        <th>${t('surveyQuestionValue', language, {data, row, component})}</th>
+        <th>${t('surveyQuestion', language, { data, row, component })}</th>
+        <th>${t('surveyQuestionValue', language, { data, row, component })}</th>
       </tr>
     </thead>`;
-  const rows = value ? 
-    Object.entries(value as any)
-      .map(([key, value]) => {
-        const question = _.find((component as any).questions, ['value', key]);
-        const answer = _.find((component as any).values, ['value', value]);
-        if (!question || !answer) {
-          return;
-        }
-        return `
-          <tr>
-            <td style="text-align:center;padding: 5px 10px;">${question.label}</td>
-            <td style="text-align:center;padding: 5px 10px;">${answer.label}</td>
-          </tr>
+  const rows = value
+    ? Object.entries(value as any)
+        .map(([key, value]) => {
+          const question = _.find((component as any).questions, ['value', key]);
+          const answer = _.find((component as any).values, ['value', value]);
+          if (!question || !answer) {
+            return;
+          }
+          return `
+            <tr>
+              <td style="text-align:center;padding: 5px 10px;">${question.label}</td>
+              <td style="text-align:center;padding: 5px 10px;">${answer.label}</td>
+            </tr>
         `;
-      }).join('') : 
-      [];
-  return renderTable(component, paths, undefined, rows, tHead);
+        })
+        .join('')
+    : [];
+  insertTable({ component, parentId, document, paths }, rows, tHead);
 };
 
-export const renderDataMapTable = (rowValue: any, component: any, paths: any) => {  
-  const rows = rowValue ? 
-    Object.entries(rowValue as any)
-      .map(([key, value]) => renderRow(value, undefined, key)).join('') : 
-    [];
-  return renderTable(component, paths, undefined, rows);
+export const insertDataMapTable = (rowValue: any, componentRenderContext: any) => {
+  const modifiedComponentPath = componentRenderContext?.paths?.dataPath?.replace(/\.data\b/g, '');
+  const rows = rowValue
+    ? Object.entries(rowValue as any)
+        .map(([key, value]) =>
+          insertRow(
+            value,
+            { ...componentRenderContext, parentId: modifiedComponentPath },
+            key,
+            true,
+          ),
+        )
+        .join('')
+    : [];
+  insertTable(componentRenderContext, rows);
+};
+
+const insertHtml = (html: any, parentId: any, document: any) => {
+  const parentElement = document.getElementById(parentId);
+  if (parentElement) {
+    parentElement.insertAdjacentHTML('beforeend', html);
+  }
 };
