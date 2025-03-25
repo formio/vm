@@ -17,6 +17,7 @@ import {
   insertSketchpadTable,
   insertSurveyTable,
   insertTable,
+  isGridBasedComponent,
   isLayoutComponent,
 } from './renderEmailUtils';
 
@@ -57,21 +58,47 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
 
   const rowValue: any = _.get(data, paths?.dataPath ?? component.key);
 
-  // remove the component key from the data path
-  // to match it to the id of the parent table
-  // TODO: handle nested edit grids, etc
-  const dataPath = paths?.dataPath;
-  const parentId = dataPath?.includes('.')
-    ? dataPath.substring(0, dataPath.lastIndexOf('.')).replace(/\.data\b/g, '')
-    : dataPath;
+  // some components (like nested forms) add .data to the path
+  // this gets in the way of things
+  // i.e. if the parent's data path is form
+  // and the child's is form.data.textField
+  const componentId = paths?.dataPath?.replace(/\.data\b/g, '') ?? '';
+  // remove the current component key from the path
+  // so we can get at the parent component's data path
+  // to insert child rows/tables into the parent html table
+  const parentId = parent
+    ? componentId?.includes('.')
+      ? componentId.substring(0, componentId.lastIndexOf('.'))
+      : componentId
+    : 'main';
+
+  const isGridComponent = isGridBasedComponent(component);
+  // this is necessary for rendering descendants of grid-based components that are wrapped by layout components
+  const componentIdIncludesGridParent = componentId?.includes(
+    (scope as any)?.gridParent?.componentId,
+  );
+  if ((scope as any).gridParent && !componentIdIncludesGridParent) {
+    (scope as any).gridParent = null;
+  }
+  if ((component as any).components?.length > 0 && isGridComponent) {
+    // it will be the parent for future iterations until the data path no longer includes the key
+    (scope as any).gridParent = {
+      componentId,
+      isTagPad: component?.type === 'tagpad',
+    };
+  }
+
   const componentRenderContext = {
     component,
     data,
     row,
     paths,
-    parentId: !parent ? 'main' : parentId,
+    parent,
+    parentId,
+    componentId,
     document,
     language,
+    gridParent: (scope as any).gridParent,
   };
 
   switch (component.type) {
@@ -84,13 +111,15 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
     case 'url':
     case 'phoneNumber':
     case 'day':
-    case 'tags': {
+    case 'tags':
+    case 'reviewpage': { // case 'custom':
       const outputValue = component.multiple ? rowValue?.join(', ') : rowValue;
       insertRow(outputValue, componentRenderContext);
       return;
     }
-    case 'checkbox': {
-      // TODO: translation
+    // TODO: translation
+    case 'checkbox':
+    case 'signature': {
       insertRow(rowValue ? 'Yes' : 'No', componentRenderContext);
       return;
     }
@@ -141,24 +170,10 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
       insertSurveyTable(rowValue, componentRenderContext);
       return;
     }
-    case 'signature':
-      // TODO: translation
-      insertRow(rowValue ? 'Yes' : 'No', componentRenderContext);
-      return;
     case 'datamap': {
       insertDataMapTable(rowValue, componentRenderContext);
       return;
     }
-    // case 'datagrid': {
-    //   insertTable(componentRenderContext);
-    //   return;
-    // }
-    case 'editgrid': {
-      insertGridTable(componentRenderContext);
-      return;
-    }
-    // premium components
-    // case 'datasource': N/A (pretty sure)
     //TODO: look into how options.review works for file components
     case 'file': {
       const outputValue = _.isArray(rowValue)
@@ -171,17 +186,16 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
       insertSketchpadTable(componentRenderContext);
       return;
     }
-    case 'tagpad': {
+    case 'datagrid':
+    case 'editgrid':
+    case 'tagpad':
+    case 'datatable': {
       insertGridTable(componentRenderContext);
       return;
     }
-    // case 'datatable':
-    // case 'reviewpage':
-    // case 'custom':
-    // form components
-    case 'form':
-    case 'dynamicWizard': {
+    case 'form': {
       // we don't currently handle double+ nested forms
+      // so just show the form id
       if (parent?.type === 'form') {
         const outputValue = (component as any).form;
         insertRow(outputValue, componentRenderContext);

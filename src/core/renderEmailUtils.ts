@@ -19,9 +19,6 @@ export const t = (text: any, language: any, params: any = {}, ...args: []) => {
     return text;
   }
   const i18n = I18n.init(language);
-  params.data = params.data;
-  params.row = params.row;
-  params.component = params.component;
   return i18n.t(text, params, ...args);
 };
 
@@ -37,6 +34,14 @@ export const isLayoutComponent = (component: any) => {
     'content',
   ].includes(component.type);
 };
+
+export const isGridBasedComponent = (component: any) => {
+  return ['editgrid', 'tagpad', 'datagrid', 'datatable'].includes(component?.type);
+};
+
+const shouldInsertGridChild = (parent: any, component: any, gridParent: any) =>
+  isGridBasedComponent(parent) ||
+  (gridParent && !isGridBasedComponent(component) && parent?.type !== 'form');
 
 const isValueInLegacyFormat = (value: any) => {
   return value && !value.mode;
@@ -147,13 +152,14 @@ export const formatTime = (value: any, component: any) => {
 };
 
 export const insertRow = (
-  value: any,
+  rawValue: any,
   componentRenderContext: any,
   label?: any,
-  noInsert?: boolean,
+  noInsert?: boolean, // only used by insertDataMapTable
 ) => {
-  const { component, parentId, document } = componentRenderContext;
-  if (/^.*\[\d+\]$/.test(parentId)) {
+  const { component, parent, parentId, document, gridParent } = componentRenderContext;
+  const value = component?.protected ? '--- PROTECTED ---' : rawValue ?? '';
+  if (shouldInsertGridChild(parent, component, gridParent) && !noInsert) {
     insertGridRow(value, componentRenderContext);
     return;
   }
@@ -161,82 +167,86 @@ export const insertRow = (
     <tr>
       <th style="padding: 5px 10px;">${label ?? component?.label ?? component?.key ?? ''}</th>
       <td style="width:100%;padding:5px 10px;">
-        ${component?.protected ? '--- PROTECTED ---' : value ?? ''}
+        ${value}
       </td>
     </tr>
   `;
   if (noInsert) return html;
-  const nonIndexedPath = parentId.replace(/\[\d+\]/g, '');
-  insertHtml(html, nonIndexedPath, document);
+  insertHtml(html, parentId, document);
 };
 
-const insertGridHeader = ({ component, data, row, paths, document }: any, rootComponentId: any) => {
-  const existingHeadValue = document.getElementById(component.compPath);
+const insertGridHeader = ({ component, data, row, parentId, paths, document }: any) => {
+  // we ignore the row index of the current table since we only need one header (<th>) per component label
+  // i.e. if we have editGrid[0].editGrid1[0].editGrid[1]
+  // we only want editGrid[0].editGrid1[0].editGrid
+  const parentIdNoLastIndex = parentId.replace(/\[\d+\]$/, '');
+  const componentIdNoRowIndex = `${parentIdNoLastIndex}-${(component as any).key}`;
+  const existingHeadValue = document.getElementById(`${componentIdNoRowIndex}-th`);
   if (!existingHeadValue) {
     const headValue = `
-      <th id="${component.compPath}">${t(component.label, {
+      <th style="padding: 5px 10px;" id="${componentIdNoRowIndex}-th">${t(component.label, {
         data,
         row,
         paths,
         _userInput: true,
       })}
       </th>`;
-    const modifiedParentId = `${rootComponentId}-thead`;
+    // we ignore the most immediate row index here too because when the parent grid-based table was inserted
+    // it had no rows
+    const modifiedParentId = `${parentIdNoLastIndex}-thead`;
     insertHtml(headValue, modifiedParentId, document);
   }
 };
 
 const insertGridHtml = (
-  document: any,
+  { document, paths, gridParent, parentId }: any,
   childHtml: any, // child row or child table
-  rootComponentId: any,
-  dataIndex: any,
 ) => {
-  const childRowId = `${rootComponentId}-childRow${dataIndex}`;
+  const dataIndex = paths?.dataIndex + 1;
+  const childRowId = `${parentId}-childRow`;
   const existingChildRow = document.getElementById(childRowId);
-  // this check won't work if there's any tagpad anywhere on the doc...
-  const isTagPadChild = document.getElementById('tagpad-dots');
-
+  const isTagPad = gridParent?.isTagPad;
+  const styles = isTagPad ? 'text-align: center' : 'padding: 5px 10px;';
   const rowValue = `
-    ${!existingChildRow ? `<tr id="${rootComponentId}-childRow${dataIndex}">` : ''}
+    ${!existingChildRow ? `<tr id="${childRowId}">` : ''}
         ${
-          !existingChildRow && isTagPadChild
-            ? `<td id="${dataIndex}-tdIndex" style="text-align: center">${dataIndex}</td>`
+          !existingChildRow && isTagPad
+            ? `<td id="${dataIndex}-tdIndex" style="${styles}">${dataIndex}</td>`
             : ''
         }
         ${childHtml}
       ${!existingChildRow ? `</tr>` : ''}`;
 
-  insertHtml(rowValue, existingChildRow ? childRowId : rootComponentId, document);
+  insertHtml(
+    rowValue,
+    // replace the last index since when the parent grid-based table was inserted
+    // the componentId of that table had no index
+    existingChildRow ? childRowId : parentId.replace(/\[\d+\]$/, ''),
+    document,
+  );
 };
 
-export const insertGridRow = (
-  value: any,
-  { component, data, row, parentId, paths, document }: any,
-) => {
-  const rootComponentId = parentId.replace(/\[\d+\]/g, '').replace(/\[\d+\]/g, '');
-  insertGridHeader({ component, data, row, paths, document }, rootComponentId);
-  const dataIndex = paths?.dataIndex + 1;
-  const childValue = `<td style="text-align: center">${value}</td>`;
-  insertGridHtml(document, childValue, rootComponentId, dataIndex);
+export const insertGridRow = (value: any, { gridParent, ...componentRenderContext }: any) => {
+  insertGridHeader({ gridParent, ...componentRenderContext });
+  const styles = gridParent?.isTagPad ? 'text-align: center' : 'padding: 5px 10px;';
+  const childValue = `<td style="${styles}">${value}</td>`;
+  insertGridHtml({ gridParent, ...componentRenderContext }, childValue);
 };
 
 export const insertTable = (
-  { component, data, row, parentId, document, paths }: any,
+  { component, componentId, parentId, document, gridParent, ...componentRenderContext }: any,
   rows?: any,
   tHead?: any,
 ) => {
-  const modifiedComponentPath = paths?.dataPath?.replace(/\.data\b/g, '');
-  // match tagpad[0] or editgrid[1] etc
-  if (/^.*\[\d+\]$/.test(parentId)) {
+  if (shouldInsertGridChild(parent, component, gridParent)) {
     insertGridChildTable(
       {
         component,
-        data,
-        row,
-        paths,
+        componentId,
         parentId,
         document,
+        gridParent,
+        ...componentRenderContext,
       },
       rows,
       tHead,
@@ -249,7 +259,7 @@ export const insertTable = (
       <td style="width:100%;padding:5px 10px;">
         <table border="1" style="width:100%">
           ${tHead ?? ''}
-          <tbody id="${modifiedComponentPath}">
+          <tbody id="${componentId}">
             ${rows ?? ''}
           </tbody>
         </table>
@@ -260,24 +270,23 @@ export const insertTable = (
 };
 
 export const insertGridChildTable = (
-  { component, data, row, parentId, paths, document }: any,
+  { componentId, gridParent, ...componentRenderContext }: any,
   rows?: any,
   tHead?: any,
 ) => {
-  const rootComponentId = parentId.replace(/\[\d+\]/g, '');
-  insertGridHeader({ component, data, row, paths, document }, rootComponentId);
+  insertGridHeader({ componentId, gridParent, ...componentRenderContext });
+  const styles = gridParent?.isTagPad ? 'text-align: center' : 'padding: 5px 10px;';
   const childTable = `
-    <td style="text-align: center">
+    <td style="${styles}">
       <table border="1" style="width:100%">
         ${tHead ?? ''}
-        <tbody id="${parentId}">
+        <tbody id="${componentId}">
         ${rows ?? ''}
         </tbody>
       </table>
     </td>
   `;
-  const dataIndex = paths?.dataIndex + 1;
-  insertGridHtml(document, childTable, rootComponentId, dataIndex);
+  insertGridHtml({ componentId, gridParent, ...componentRenderContext }, childTable);
 };
 
 export const insertSketchpadTable = ({
@@ -288,6 +297,7 @@ export const insertSketchpadTable = ({
   paths,
   document,
   language = 'en',
+  gridParent,
 }: any) => {
   const tHead = `
     <thead>
@@ -298,22 +308,21 @@ export const insertSketchpadTable = ({
       )}</tr>
     </thead>
   `;
-  insertTable({ component, parentId, document, paths }, undefined, tHead);
+  insertTable({ component, parentId, gridParent, document, paths }, undefined, tHead);
 };
 
 export const insertGridTable = ({
   component,
+  componentId,
   data,
   row,
-  parentId,
-  document,
   paths,
   language = 'en',
+  ...componentRenderContext
 }: any) => {
-  const modifiedComponentPath = paths?.dataPath?.replace(/\.data\b/g, '').replace(/\[\d+\]/g, '');
   const tHead = `
     <thead>
-      <tr id="${modifiedComponentPath}-thead">
+      <tr id="${componentId}-thead">
         ${
           component.type === 'tagpad'
             ? `<th id="tagpad-dots">${t('dots', language, { data, row, paths })}</th>`
@@ -322,12 +331,16 @@ export const insertGridTable = ({
       </tr>
     </thead>
   `;
-  insertTable({ component, parentId, document, paths }, undefined, tHead);
+  insertTable(
+    { component, componentId, data, row, paths, language, ...componentRenderContext },
+    undefined,
+    tHead,
+  );
 };
 
 export const insertSurveyTable = (
   value: any,
-  { component, data, row, parentId, document, paths, language = 'en' }: any,
+  { component, data, row, parentId, gridParent, document, paths, language = 'en' }: any,
 ) => {
   const tHead = `             
     <thead>
@@ -353,21 +366,13 @@ export const insertSurveyTable = (
         })
         .join('')
     : [];
-  insertTable({ component, parentId, document, paths }, rows, tHead);
+  insertTable({ component, parentId, gridParent, document, paths }, rows, tHead);
 };
 
 export const insertDataMapTable = (rowValue: any, componentRenderContext: any) => {
-  const modifiedComponentPath = componentRenderContext?.paths?.dataPath?.replace(/\.data\b/g, '');
   const rows = rowValue
     ? Object.entries(rowValue as any)
-        .map(([key, value]) =>
-          insertRow(
-            value,
-            { ...componentRenderContext, parentId: modifiedComponentPath },
-            key,
-            true,
-          ),
-        )
+        .map(([key, value]) => insertRow(value, componentRenderContext, key, true))
         .join('')
     : [];
   insertTable(componentRenderContext, rows);
