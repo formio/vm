@@ -4,13 +4,27 @@ import {
   coreEnTranslation,
   currentTimezone,
   momentDate,
+  Component,
+  DataObject,
+  AddressComponent,
+  DateTimeComponent,
+  SurveyComponent,
+  TimeComponent,
+  Evaluator,
+  AddressComponentDataObject,
 } from '@formio/core';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import _ from 'lodash';
 import moment from 'moment';
+import { ComponentRenderContext, GridParent } from './renderEmail';
 
-export const t = (text: any, language: any, params: any = {}, ...args: []) => {
+export const t = (
+  text: string,
+  language: string = 'en',
+  params: Record<string, any> = {},
+  ...args: any[]
+): string => {
   if (!text) {
     return '';
   }
@@ -22,33 +36,30 @@ export const t = (text: any, language: any, params: any = {}, ...args: []) => {
   return i18n.t(text, params, ...args);
 };
 
-export const isLayoutComponent = (component: any) => {
-  return [
-    'panel',
-    'table',
-    'columns',
-    'fieldset',
-    'tabs',
-    'well',
-    'htmlelement',
-    'content',
-  ].includes(component.type);
-};
+export const isLayoutComponent = (component: Component): boolean =>
+  ['panel', 'table', 'columns', 'fieldset', 'tabs', 'well', 'htmlelement', 'content'].includes(
+    component.type,
+  );
 
-export const isGridBasedComponent = (component: any) => {
-  return ['editgrid', 'tagpad', 'datagrid', 'datatable'].includes(component?.type);
-};
+export const isGridBasedComponent = (component?: Component | null): boolean =>
+  ['editgrid', 'tagpad', 'datagrid', 'datatable'].includes(component?.type ?? '');
 
-const shouldInsertGridChild = (parent: any, component: any, gridParent: any) =>
+const shouldInsertGridChild = (
+  component: Component,
+  parent?: Component | null,
+  gridParent?: GridParent,
+): boolean =>
   isGridBasedComponent(parent) ||
-  (gridParent && !isGridBasedComponent(component) && parent?.type !== 'form');
+  (Boolean(gridParent) && !isGridBasedComponent(component) && parent?.type !== 'form');
 
-const isValueInLegacyFormat = (value: any) => {
+const isValueInLegacyFormat = (value: AddressComponentDataObject) => {
   return value && !value.mode;
 };
 
-const normalizeValue = (value: any, component: any, data: any) => {
-  return component.enableManualMode && isValueInLegacyFormat(data.address)
+// if the value is in legacy format, it won't be of type AddressComponentDataObject
+// so using any instead
+const normalizeValue = (value: any, component: AddressComponent) => {
+  return component.enableManualMode && isValueInLegacyFormat(value)
     ? {
         mode: 'autocomplete',
         address: value,
@@ -56,22 +67,34 @@ const normalizeValue = (value: any, component: any, data: any) => {
     : value;
 };
 
-const getProviderDisplayValue = (address: any, component: any) => {
+const getProviderDisplayValue = (
+  address: AddressComponentDataObject,
+  component: AddressComponent,
+): string => {
   let displayedProperty = '';
-  if (component.provider === 'google') {
-    displayedProperty = _.has(address, 'formattedPlace') ? 'formattedPlace' : 'formatted_address';
-  } else if (component.provider === 'nominatim') {
-    displayedProperty = 'display_name';
-  } else if (component.provider === 'azure') {
-    displayedProperty = 'address.freeformAddress';
-  } else if (component.provider === 'custom') {
-    displayedProperty = component?.providerOptions?.displayValueProperty;
+  switch (component.provider) {
+    case 'google':
+      displayedProperty = _.has(address, 'formattedPlace') ? 'formattedPlace' : 'formatted_address';
+      break;
+    case 'nominatim':
+      displayedProperty = 'display_name';
+      break;
+    case 'azure':
+      displayedProperty = 'address.freeformAddress';
+      break;
+    case 'custom':
+      displayedProperty = component?.providerOptions?.displayValueProperty;
+      break;
   }
   return _.get(address, displayedProperty, '');
 };
 
-export const formatAddressValue = (value: any, component: any, data: any): string => {
-  const normalizedValue = normalizeValue(value, component, data);
+export const formatAddressValue = (
+  value: AddressComponentDataObject,
+  component: AddressComponent,
+  data: DataObject,
+): string => {
+  const normalizedValue = normalizeValue(value, component);
 
   const { address, mode } = component.enableManualMode
     ? normalizedValue
@@ -85,42 +108,30 @@ export const formatAddressValue = (value: any, component: any, data: any): strin
   if (component.provider && !valueInManualMode) {
     return getProviderDisplayValue(address, component);
   }
-  // TODO: use interpolate fn from core
   if (valueInManualMode) {
     if (component.manualModeViewString && address) {
-      return component.manualModeViewString.replace(
-        /\{\{\s*([\w.[\]]+)\s*\}\}/g,
-        (match: string, path: string) => {
-          if (path.startsWith('address.')) {
-            const addressPath = path.replace('address.', '');
-            return _.get(address, addressPath, '');
-          } else if (path.startsWith('component.')) {
-            const componentPath = path.replace('component.', '');
-            return _.get(component, componentPath, '');
-          } else if (path.startsWith('data.')) {
-            const dataPath = path.replace('data.', '');
-            return _.get(data, dataPath, '');
-          }
-        },
-      );
+      return Evaluator.interpolateString(component.manualModeViewString, {
+        address,
+        component,
+        data,
+      });
     }
-    if (address) {
-      const parts = [];
-      if (address.address1) parts.push(address.address1);
-      if (address.address2) parts.push(address.address2);
-      if (address.city) parts.push(address.city);
-      if (address.state) parts.push(address.state);
-      if (address.zip) parts.push(address.zip);
-      if (address.country) parts.push(address.country);
-      return parts.join(', ');
-    }
-    return '';
+  }
+  if (address) {
+    const parts = [];
+    if (address.address1) parts.push(address.address1);
+    if (address.address2) parts.push(address.address2);
+    if (address.city) parts.push(address.city);
+    if (address.state) parts.push(address.state);
+    if (address.zip) parts.push(address.zip);
+    if (address.country) parts.push(address.country);
+    return parts.join(', ');
   }
   return '';
 };
 
-export const formatCurrency = (value: any, component: any) => {
-  const currency = component.currency;
+export const formatCurrency = (value: string, component: Component): string => {
+  const currency = (component as any).currency;
   // TODO: handle empty vals
   return currency
     ? Number(value).toLocaleString(undefined, {
@@ -130,12 +141,12 @@ export const formatCurrency = (value: any, component: any) => {
     : value;
 };
 
-export const formatDatetime = (value: any, component: any) => {
-  const rawFormat = (component as any).format ?? 'yyyy-MM-dd hh:mm a';
+export const formatDatetime = (value: string, component: DateTimeComponent): string => {
+  const rawFormat = component.format ?? 'yyyy-MM-dd hh:mm a';
   let format = convertFormatToMoment(rawFormat);
   format += format.match(/z$/) ? '' : ' z';
-  const displayInTimezone = (component as any).displayInTimezone;
-  const submissionTimezone = (component as any).timezone;
+  const displayInTimezone = component.displayInTimezone;
+  const submissionTimezone = component.timezone;
   const timezone =
     displayInTimezone === 'utc'
       ? 'Etc/UTC'
@@ -145,21 +156,21 @@ export const formatDatetime = (value: any, component: any) => {
   return momentDate(value, format, timezone).format(format);
 };
 
-export const formatTime = (value: any, component: any) => {
-  const format = (component as any).format ?? 'HH:mm';
-  const dataFormat = (component as any).dataFormat ?? 'HH:mm:ss';
-  return moment(value as any, dataFormat).format(format);
+export const formatTime = (value: string, component: TimeComponent): string => {
+  const format = component.format ?? 'HH:mm';
+  const dataFormat = component.dataFormat ?? 'HH:mm:ss';
+  return moment(value, dataFormat).format(format);
 };
 
 export const insertRow = (
-  rawValue: any,
-  componentRenderContext: any,
-  label?: any,
+  componentRenderContext: ComponentRenderContext,
+  rawValue?: string,
+  label?: string,
   noInsert?: boolean, // only used by insertDataMapTable
-) => {
+): string | void => {
   const { component, parent, parentId, document, gridParent } = componentRenderContext;
   const value = component?.protected ? '--- PROTECTED ---' : rawValue ?? '';
-  if (shouldInsertGridChild(parent, component, gridParent) && !noInsert) {
+  if (shouldInsertGridChild(component, parent, gridParent) && !noInsert) {
     insertGridRow(value, componentRenderContext);
     return;
   }
@@ -175,21 +186,33 @@ export const insertRow = (
   insertHtml(html, parentId, document);
 };
 
-const insertGridHeader = ({ component, data, row, parentId, paths, document }: any) => {
+const insertGridHeader = ({
+  component,
+  data,
+  row,
+  parentId,
+  paths,
+  document,
+  language,
+}: ComponentRenderContext) => {
   // we ignore the row index of the current table since we only need one header (<th>) per component label
   // i.e. if we have editGrid[0].editGrid1[0].editGrid[1]
   // we only want editGrid[0].editGrid1[0].editGrid
   const parentIdNoLastIndex = parentId.replace(/\[\d+\]$/, '');
-  const componentIdNoRowIndex = `${parentIdNoLastIndex}-${(component as any).key}`;
+  const componentIdNoRowIndex = `${parentIdNoLastIndex}-${component.key}`;
   const existingHeadValue = document.getElementById(`${componentIdNoRowIndex}-th`);
   if (!existingHeadValue) {
     const headValue = `
-      <th style="padding: 5px 10px;" id="${componentIdNoRowIndex}-th">${t(component.label, {
-        data,
-        row,
-        paths,
-        _userInput: true,
-      })}
+      <th style="padding: 5px 10px;" id="${componentIdNoRowIndex}-th">${t(
+        component?.label ?? component.key,
+        language,
+        {
+          data,
+          row,
+          paths,
+          _userInput: true,
+        },
+      )}
       </th>`;
     // we ignore the most immediate row index here too because when the parent grid-based table was inserted
     // it had no rows
@@ -199,21 +222,17 @@ const insertGridHeader = ({ component, data, row, parentId, paths, document }: a
 };
 
 const insertGridHtml = (
-  { document, paths, gridParent, parentId }: any,
-  childHtml: any, // child row or child table
+  { document, paths, gridParent, parentId }: ComponentRenderContext,
+  childHtml: string, // child row or child table
 ) => {
-  const dataIndex = paths?.dataIndex + 1;
+  const dataIndex = paths?.dataIndex ? paths.dataIndex + 1 : 0;
   const childRowId = `${parentId}-childRow`;
   const existingChildRow = document.getElementById(childRowId);
   const isTagPad = gridParent?.isTagPad;
   const styles = isTagPad ? 'text-align: center' : 'padding: 5px 10px;';
   const rowValue = `
     ${!existingChildRow ? `<tr id="${childRowId}">` : ''}
-        ${
-          !existingChildRow && isTagPad
-            ? `<td id="${dataIndex}-tdIndex" style="${styles}">${dataIndex}</td>`
-            : ''
-        }
+        ${!existingChildRow && isTagPad ? `<td style="${styles}">${dataIndex}</td>` : ''}
         ${childHtml}
       ${!existingChildRow ? `</tr>` : ''}`;
 
@@ -226,7 +245,10 @@ const insertGridHtml = (
   );
 };
 
-export const insertGridRow = (value: any, { gridParent, ...componentRenderContext }: any) => {
+export const insertGridRow = (
+  value: string,
+  { gridParent, ...componentRenderContext }: ComponentRenderContext,
+) => {
   insertGridHeader({ gridParent, ...componentRenderContext });
   const styles = gridParent?.isTagPad ? 'text-align: center' : 'padding: 5px 10px;';
   const childValue = `<td style="${styles}">${value}</td>`;
@@ -234,17 +256,26 @@ export const insertGridRow = (value: any, { gridParent, ...componentRenderContex
 };
 
 export const insertTable = (
-  { component, componentId, parentId, document, gridParent, ...componentRenderContext }: any,
-  rows?: any,
-  tHead?: any,
+  {
+    component,
+    componentId,
+    parentId,
+    document,
+    parent,
+    gridParent,
+    ...componentRenderContext
+  }: ComponentRenderContext,
+  rows?: string,
+  tHead?: string,
 ) => {
-  if (shouldInsertGridChild(parent, component, gridParent)) {
+  if (shouldInsertGridChild(component, parent, gridParent)) {
     insertGridChildTable(
       {
         component,
         componentId,
         parentId,
         document,
+        parent,
         gridParent,
         ...componentRenderContext,
       },
@@ -270,9 +301,9 @@ export const insertTable = (
 };
 
 export const insertGridChildTable = (
-  { componentId, gridParent, ...componentRenderContext }: any,
-  rows?: any,
-  tHead?: any,
+  { componentId, gridParent, ...componentRenderContext }: ComponentRenderContext,
+  rows?: string,
+  tHead?: string,
 ) => {
   insertGridHeader({ componentId, gridParent, ...componentRenderContext });
   const styles = gridParent?.isTagPad ? 'text-align: center' : 'padding: 5px 10px;';
@@ -294,21 +325,20 @@ export const insertSketchpadTable = ({
   data,
   row,
   parentId,
-  paths,
-  document,
   language = 'en',
-  gridParent,
-}: any) => {
+  ...componentRenderContext
+}: ComponentRenderContext) => {
   const tHead = `
     <thead>
-      <tr><th>${t(component.label, { data, row, component, _userInput: true })}</th>${t(
-        'complexData',
-        language,
-        { data, row, component },
-      )}</tr>
+      <tr><th>${t(component?.label ?? component.key, language, {
+        data,
+        row,
+        component,
+        _userInput: true,
+      })}</th>${t('complexData', language, { data, row, component })}</tr>
     </thead>
   `;
-  insertTable({ component, parentId, gridParent, document, paths }, undefined, tHead);
+  insertTable({ component, parentId, data, ...componentRenderContext }, undefined, tHead);
 };
 
 export const insertGridTable = ({
@@ -319,7 +349,7 @@ export const insertGridTable = ({
   paths,
   language = 'en',
   ...componentRenderContext
-}: any) => {
+}: ComponentRenderContext) => {
   const tHead = `
     <thead>
       <tr id="${componentId}-thead">
@@ -339,9 +369,20 @@ export const insertGridTable = ({
 };
 
 export const insertSurveyTable = (
-  value: any,
-  { component, data, row, parentId, gridParent, document, paths, language = 'en' }: any,
+  {
+    component,
+    data,
+    row,
+    parentId,
+    gridParent,
+    document,
+    paths,
+    language = 'en',
+    ...componentRenderContext
+  }: ComponentRenderContext,
+  value: Record<string, string>,
 ) => {
+  if (component.type !== 'survey') return;
   const tHead = `             
     <thead>
       <tr>
@@ -350,10 +391,10 @@ export const insertSurveyTable = (
       </tr>
     </thead>`;
   const rows = value
-    ? Object.entries(value as any)
+    ? Object.entries(value)
         .map(([key, value]) => {
-          const question = _.find((component as any).questions, ['value', key]);
-          const answer = _.find((component as any).values, ['value', value]);
+          const question = _.find((component as SurveyComponent).questions, ['value', key]);
+          const answer = _.find((component as SurveyComponent).values, ['value', value]);
           if (!question || !answer) {
             return;
           }
@@ -365,20 +406,27 @@ export const insertSurveyTable = (
         `;
         })
         .join('')
-    : [];
-  insertTable({ component, parentId, gridParent, document, paths }, rows, tHead);
+    : '';
+  insertTable(
+    { component, parentId, data, gridParent, document, paths, ...componentRenderContext },
+    rows,
+    tHead,
+  );
 };
 
-export const insertDataMapTable = (rowValue: any, componentRenderContext: any) => {
-  const rows = rowValue
-    ? Object.entries(rowValue as any)
-        .map(([key, value]) => insertRow(value, componentRenderContext, key, true))
+export const insertDataMapTable = (
+  componentRenderContext: ComponentRenderContext,
+  value: Record<string, string>,
+) => {
+  const rows = value
+    ? Object.entries(value)
+        .map(([key, value]) => insertRow(componentRenderContext, value, key, true))
         .join('')
-    : [];
+    : '';
   insertTable(componentRenderContext, rows);
 };
 
-const insertHtml = (html: any, parentId: any, document: any) => {
+const insertHtml = (html: string, parentId: string, document: Document): void => {
   const parentElement = document.getElementById(parentId);
   if (parentElement) {
     parentElement.insertAdjacentHTML('beforeend', html);
