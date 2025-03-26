@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ProcessorContext,
   ProcessorFn,
@@ -5,6 +6,15 @@ import {
   ProcessorInfo,
   ProcessorScope,
   processSync,
+  Component,
+  ComponentPaths,
+  DataObject,
+  AddressComponent,
+  DateTimeComponent,
+  TimeComponent,
+  SelectBoxesComponent,
+  AddressComponentDataObject,
+  FormComponent,
 } from '@formio/core';
 import {
   formatAddressValue,
@@ -22,7 +32,6 @@ import {
 } from './renderEmailUtils';
 
 import { JSDOM } from 'jsdom';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import _ from 'lodash';
 import { evaluate } from '..';
 import macros from './deps/nunjucks-macros';
@@ -33,19 +42,39 @@ export type RenderEmailOptions = {
   timeout?: number;
 };
 
-const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
+export interface GridParent {
+  componentId: string;
+  isTagPad: boolean;
+}
+
+export type ComponentRenderContext = {
+  component: Component;
+  data: DataObject;
+  row?: any;
+  paths?: ComponentPaths;
+  parent?: Component | null;
+  parentId: string;
+  componentId: string;
+  document: Document;
+  language?: string;
+  gridParent?: GridParent;
+};
+
+const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (
+  context: ProcessorContext<ProcessorScope>,
+) => {
   const { component, paths, parent, row, scope, data } = context;
+  const scopeRef = scope as any;
   if ((component as any).skipInEmail || isLayoutComponent(component)) return;
-  if (!(scope as any).emailDom) {
-    (scope as any).emailDom = new JSDOM(`
+  if (!scopeRef.emailDom) {
+    scopeRef.emailDom = new JSDOM(`
         <table border="1" style="width:100%">
           <tbody id="main">
           </tbody>
         </table>
       `);
   }
-  const document = (scope as any).emailDom.window.document;
-  const scopeRef = scope as any;
+  const document = scopeRef.emailDom.window.document;
   if (
     scopeRef.conditionals.find(
       (cond: any) => cond.path === paths?.fullPath && cond.conditionallyHidden,
@@ -74,15 +103,13 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
 
   const isGridComponent = isGridBasedComponent(component);
   // this is necessary for rendering descendants of grid-based components that are wrapped by layout components
-  const componentIdIncludesGridParent = componentId?.includes(
-    (scope as any)?.gridParent?.componentId,
-  );
-  if ((scope as any).gridParent && !componentIdIncludesGridParent) {
-    (scope as any).gridParent = null;
+  const componentIdIncludesGridParent = componentId?.includes(scopeRef?.gridParent?.componentId);
+  if (scopeRef.gridParent && !componentIdIncludesGridParent) {
+    scopeRef.gridParent = undefined;
   }
   if ((component as any).components?.length > 0 && isGridComponent) {
     // it will be the parent for future iterations until the data path no longer includes the key
-    (scope as any).gridParent = {
+    scopeRef.gridParent = {
       componentId,
       isTagPad: component?.type === 'tagpad',
     };
@@ -98,7 +125,7 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
     componentId,
     document,
     language,
-    gridParent: (scope as any).gridParent,
+    gridParent: scopeRef.gridParent,
   };
 
   switch (component.type) {
@@ -112,66 +139,70 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
     case 'phoneNumber':
     case 'day':
     case 'tags':
-    case 'reviewpage': { // case 'custom':
+    case 'reviewpage': {
       const outputValue = component.multiple ? rowValue?.join(', ') : rowValue;
-      insertRow(outputValue, componentRenderContext);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     // TODO: translation
     case 'checkbox':
     case 'signature': {
-      insertRow(rowValue ? 'Yes' : 'No', componentRenderContext);
+      insertRow(componentRenderContext, rowValue ? 'Yes' : 'No');
       return;
     }
     case 'textarea': {
       const outputValue = component.multiple
         ? rowValue?.map((v: string) => v.replace(/\n/g, ' ')).join(', ')
         : rowValue;
-      insertRow(outputValue, componentRenderContext);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     case 'selectboxes': {
-      const outputValue = (component as any).values
-        ?.filter((v: any) => rowValue[v.value])
-        .map((v: any) => v.label)
+      const outputValue = (component as SelectBoxesComponent).values
+        ?.filter((v) => rowValue[v.value])
+        .map((v) => v.label)
         .join(', ');
-      insertRow(outputValue, componentRenderContext);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     case 'address': {
       const outputValue = component.multiple
-        ? rowValue?.map((v: any) => formatAddressValue(v, component, data)).join(', ')
-        : formatAddressValue(rowValue, component, data);
-      insertRow(outputValue, componentRenderContext);
+        ? rowValue
+            ?.map((v: AddressComponentDataObject) =>
+              formatAddressValue(v, component as AddressComponent, data),
+            )
+            .join(', ')
+        : formatAddressValue(rowValue, component as AddressComponent, data);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     case 'datetime': {
       const outputValue = component.multiple
-        ? rowValue?.map((v: any) => formatDatetime(v, component)).join(', ')
-        : formatDatetime(rowValue, component);
-      insertRow(outputValue, componentRenderContext);
+        ? rowValue?.map((v: string) => formatDatetime(v, component as DateTimeComponent)).join(', ')
+        : formatDatetime(rowValue, component as DateTimeComponent);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     case 'time': {
       const outputValue = component.multiple
-        ? rowValue?.map((v: any) => formatTime(v, component)).join(', ')
-        : formatDatetime(rowValue, component);
-      insertRow(outputValue, componentRenderContext);
+        ? rowValue?.map((v: string) => formatTime(v, component as TimeComponent)).join(', ')
+        : formatTime(rowValue, component as TimeComponent);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     case 'currency': {
       const outputValue = component.multiple
-        ? rowValue?.map((v: any) => formatCurrency(v, component)).join(', ')
+        ? rowValue?.map((v: string) => formatCurrency(v, component)).join(', ')
         : formatCurrency(rowValue, component);
-      insertRow(outputValue, componentRenderContext);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     case 'survey': {
-      insertSurveyTable(rowValue, componentRenderContext);
+      insertSurveyTable(componentRenderContext, rowValue);
       return;
     }
     case 'datamap': {
-      insertDataMapTable(rowValue, componentRenderContext);
+      insertDataMapTable(componentRenderContext, rowValue);
       return;
     }
     //TODO: look into how options.review works for file components
@@ -179,7 +210,7 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
       const outputValue = _.isArray(rowValue)
         ? rowValue?.map((v: any) => v?.originalName).join(', ')
         : rowValue?.originalName;
-      insertRow(outputValue, componentRenderContext);
+      insertRow(componentRenderContext, outputValue);
       return;
     }
     case 'sketchpad': {
@@ -197,8 +228,8 @@ const renderEmailProcessorSync: ProcessorFnSync<ProcessorScope> = (context) => {
       // we don't currently handle double+ nested forms
       // so just show the form id
       if (parent?.type === 'form') {
-        const outputValue = (component as any).form;
-        insertRow(outputValue, componentRenderContext);
+        const outputValue = (component as FormComponent).form;
+        insertRow(componentRenderContext, outputValue);
         return;
       }
       insertTable(componentRenderContext);
