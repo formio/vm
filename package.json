@@ -1,6 +1,6 @@
 {
     "name": "@formio/vm",
-    "version": "1.0.0-rc.31",
+    "version": "1.0.0-rc.32",
     "main": "build/index.js",
     "license": "OSL-3.0",
     "engines": {
@@ -14,8 +14,8 @@
         "LICENSE.txt"
     ],
     "dependencies": {
-        "@formio/core": "2.4.0-rc.13",
-        "@formio/js": "5.1.0-rc.31",
+        "@formio/core": "2.4.0-rc.14",
+        "@formio/js": "5.1.0-rc.32",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
