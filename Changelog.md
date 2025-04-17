@@ -5,22 +5,47 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 1.0.0-rc.4]
+## [Unreleased: 1.1.0-rc.1]
 
 ### Changed
 
--   FIO-8143: migrate RootShim to eachComponent vs eachComponentData
--   FIO-8145: injectable deps
--   add includeAll flag to eachComponent
--   FIO-7488: add timeout to evaluateProcess
--   FIO-8235: add timeout to email rendering
--   FIO-8251: added inputmask library
--   FIO-8128: utilize eachComponentData 'includeAll' flag for RootShim
--   FIO-7507: Run tests and publish dev tag to npm
--   Adding 5.x renderer
--   FIO-8742: add missing nlib depedency to nunjucks injection
--   FIO-8626: Fixed hidden components rendering in email
--   Fixed issue with the instance shim and added getContext to element shim
+-   FIO-8640: Adds rowIndex to the InstanceShim
+-   FIO-9607 Mock document.querySelector
+-   FIO-7223: fix sending emails with core logic inside nunjucks
+-   you don't need to re-type fn args
+-   FIO-9532: fixed an issue where select components shows values instead of labels in email
+
+## 1.0.0
+
+### Changed
+
+- Official Release
+- Update tar-fs@2.1.2
+- FIO-8250: decouple polyfill code from core, and move it to a separate file
+- FIO-9406: add visible getter to InstanceShim
+- FIO-9640: Add submissionTimeZone option in form
+- FIO-9508: update InstanceShim to respect new pathing options
+- FIO-9607 Mock document.querySelector
+- FIO-9618: Add timeout for form rendering in email
+- FIO-9499 Mock global NodeList object
+- FIO-8640: Adds rowIndex to the InstanceShim
+- FIO-9021: Fixed hidden nested form components rendering in email
+- FIO-9064: update customDefaultValue method
+- FIO-9064: add getCustomDefaultValue method to InstanceShim, add globally configured timeout
+- FIO-8250 updated inputmask lib
+- Upgrade formiojs to @formio/js 5.x version.
+- FIO-8143: migrate RootShim to eachComponent vs eachComponentData
+- FIO-8145: injectable deps
+- add includeAll flag to eachComponent
+- FIO-7488: add timeout to evaluateProcess
+- FIO-8235: add timeout to email rendering
+- FIO-8251: added inputmask library
+- FIO-8128: utilize eachComponentData 'includeAll' flag for RootShim
+- FIO-7507: Run tests and publish dev tag to npm
+- Adding 5.x renderer
+- FIO-8742: add missing nlib depedency to nunjucks injection
+- FIO-8626: Fixed hidden components rendering in email
+- Fixed issue with the instance shim and added getContext to element shim
 
 ## 0.0.7-rc.18
 
