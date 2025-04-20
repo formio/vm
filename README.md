@@ -20,14 +20,14 @@ Please note that in addition to isolated-vm's [installation requirements](https:
 
 - `timeoutMs?: number`: a timeout in milliseconds. The evaluate function will throw an error when a script exceeds this timeout. Defaults to 1000 milliseconds.
 - `memoryLimitMb?: number`: the memory limit in MB. The evaluate function will throw an error when a script exceeds this memory limit. Defaults to 128 MB.
-- `env?: string`: a shared evaluation context. Normal calls to evaluate functions will not share state, but the `env` will be precompiled into the context. See below for details.
+- `env?: string`: a shared evaluation environment. Normal calls to evaluate functions will not share state, but the `env` will be precompiled into the context. See below for details.
 
 ### IsolateVM
 
 #### Methods
 
 - `evaluate(code: string, globals?: Record<string, TransferableValue>, timeout = VMOptions.timeoutMs): Promise<any>`: assign the globals object (if present) by key to the global scope and asynchronously evaluate the code. The last expression is returned as the result.
-- `evaluateSync(code: string, globals?: Record<string, TransferableValue>): any`: assign the globals object (if present) by key to the global scope and evaluate the code. The last expression is returned as the result.
+- `evaluateSync(code: string, globals?: Record<string, TransferableValue>, timeout = VMOptions.timeoutMs): any`: assign the globals object (if present) by key to the global scope and evaluate the code. The last expression is returned as the result.
 - `dispose(): void`: free references and dispose of the underlyling v8 isolate.
 
 ### QuickJSVM
@@ -83,9 +83,13 @@ However, each VM takes an `env` option which precompiles a script environment in
 const isolateVM = new IsolateVM({ env: 'const obj = { a: 1, b: 1 };' });
 const result1 = isolateVM.evaluateSync('obj.a = obj.a + 1; delete obj.b; obj;'); // { a: 2 }
 const result2 = isolateVM.evaluateSync('obj;'); // { a: 1, b: 1 }
+
+const quickJSVM = new QuickJSVM({ env: 'const obj = { a: 1, b: 1 };' });
+const result1 = quickJSVM.evaluateSync('obj.a = obj.a + 1; delete obj.b; obj;'); // { a: 2 }
+const result2 = quickJSVM.evaluateSync('obj;'); // { a: 1, b: 1 }
 ```
 
-You may consider adding a modicum of type safety by extending the VM class with a self-contained environment and corresponding methods.
+You may consider adding (a modicum of) type safety by extending the VM class with a self-contained environment and corresponding methods.
 
 ```ts
 class AdderVM extends IsolateVM {
