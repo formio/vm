@@ -51,10 +51,10 @@
   resolved "https://registry.yarnpkg.com/@formio/bootstrap/-/bootstrap-3.2.0-rc.1.tgz#e9ec4728a064745e0bf271203b402f60e8a67367"
   integrity sha512-F4eQsaIVq4R9eIF13A6hwdqHINQrAlATfHla1Z2cXFN47bX63jH/dpgqmXMKiIyVpCOPSA0m90M+eQDjPWVniw==
 
-"@formio/core@2.5.0-rc.1", "@formio/core@v2.5.0-rc.1":
-  version "2.5.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.5.0-rc.1.tgz#5645ea33f093c0039f1b3640cfd7126aea582287"
-  integrity sha512-5eiCZoaxtrSgnwCWiiuIfGvBSj+IpxaMkq54Ko6eFt99PDJ17zanQyOT36FhC2nIXj3h2zgKUOIO0WiXts2Jrw==
+"@formio/core@2.5.0-rc.2", "@formio/core@v2.5.0-rc.2":
+  version "2.5.0-rc.2"
+  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.5.0-rc.2.tgz#a85d80bcdf5a81cd78bf2ddcd6a56ce3091022d1"
+  integrity sha512-x93m/oMtGIzDGtnxxlD9oagabcgOEfhdYTTcYMmX9Ixw8NrSXrIqnWOXbosHpdHiLUdRBFcdYhVQGW87F4f2qw==
   dependencies:
     browser-cookies "^1.2.0"
     core-js "^3.40.0"
@@ -68,13 +68,13 @@
     lodash "^4.17.21"
     moment "^2.29.4"
 
-"@formio/js@5.2.0-rc.1":
-  version "5.2.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@formio/js/-/js-5.2.0-rc.1.tgz#fcdbf04a4199cf33efe9dcd89ea0baf50e3da8dd"
-  integrity sha512-BtLRmd7J3Pv3hLypsFIkHJocdL0fI0FU1dQfWNgq+egHXFeok6+Zx37T/xx6vybRsp63RfC756oOliEnGlpPsg==
+"@formio/js@5.2.0-rc.2":
+  version "5.2.0-rc.2"
+  resolved "https://registry.yarnpkg.com/@formio/js/-/js-5.2.0-rc.2.tgz#e40d00f91fd26908b4a086521e834c3bb5789a53"
+  integrity sha512-2qBsvUK1ArQD0K8ivbsFWrXgZTbxBu9+pGImraMPdPKHx5MRuUrX76LI5ZRFzFITIiS0G4tmDlzXFsxZ5NXBlw==
   dependencies:
     "@formio/bootstrap" v3.2.0-rc.1
-    "@formio/core" v2.5.0-rc.1
+    "@formio/core" v2.5.0-rc.2
     "@formio/text-mask-addons" "3.8.0-formio.4"
     "@formio/vanilla-text-mask" "^5.1.1-formio.1"
     abortcontroller-polyfill "^1.7.5"
