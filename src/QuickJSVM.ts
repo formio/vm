@@ -5,26 +5,29 @@ import {
   QuickJSWASMModule,
   shouldInterruptAfterDeadline,
 } from 'quickjs-emscripten';
+import debug from 'debug';
 import { TransferableValue, VMOptions } from './types';
+
+const log = debug('formio:vm');
 
 export class QuickJSVM {
   private module: QuickJSWASMModule | null;
   private timeout: number;
   private memoryLimit: number;
-  private env: string;
+  private env: string | undefined;
 
   constructor(options: VMOptions = {}) {
     this.module = null;
     this.timeout = options.timeoutMs || 1000; // Default timeout in ms
     this.memoryLimit = 1024 * 1024 * (options.memoryLimitMb ?? 128); // Default memory limit in megabytes
-    this.env = options.env ?? '';
+    this.env = options.env;
   }
 
   async init() {
     this.module = await getQuickJS();
   }
 
-  transfer(vm: QuickJSContext, value: TransferableValue): QuickJSHandle | undefined {
+  private transfer(vm: QuickJSContext, value: TransferableValue): QuickJSHandle | undefined {
     // Skip unsupported types
     if (
       typeof value === 'undefined' ||
@@ -70,26 +73,42 @@ export class QuickJSVM {
     }
   }
 
-  evaluate(code: string, globals?: Record<string, TransferableValue>, timeout = this.timeout) {
+  evaluate(
+    code: string,
+    globals?: Record<string, TransferableValue>,
+    options: Omit<VMOptions, 'memoryLimitMb'> = { timeoutMs: this.timeout },
+  ) {
     if (!this.module) {
       throw new Error('Cannot evaluate, VM not initialized');
     }
     const runtime = this.module.newRuntime({
       memoryLimitBytes: this.memoryLimit,
-      interruptHandler: shouldInterruptAfterDeadline(Date.now() + timeout),
+      interruptHandler: shouldInterruptAfterDeadline(
+        Date.now() + (options.timeoutMs ?? this.timeout),
+      ),
     });
     const vm = runtime.newContext();
     const logHandle = vm.newFunction('log', (...args) => {
       const nativeArgs = args.map(vm.dump);
-      console.log('QuickJSVM:', ...nativeArgs);
+      log('QuickJSVM:', ...nativeArgs);
     });
     const consoleHandle = vm.newObject();
     vm.setProp(consoleHandle, 'log', logHandle);
     vm.setProp(vm.global, 'console', consoleHandle);
     consoleHandle.dispose();
     logHandle.dispose();
-    if (this.env.length > 0) {
+    if (this.env) {
       const compileResult = vm.evalCode(this.env);
+      try {
+        vm.unwrapResult(compileResult);
+        compileResult.dispose();
+      } catch (e) {
+        console.error('Error evaluating env:', e);
+        throw e;
+      }
+    }
+    if (options.env) {
+      const compileResult = vm.evalCode(options.env);
       try {
         vm.unwrapResult(compileResult);
         compileResult.dispose();

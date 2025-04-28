@@ -31,7 +31,7 @@ describe('QuickJSVM', function () {
     const quickJSVM = new QuickJSVM();
     await quickJSVM.init();
     try {
-      quickJSVM.evaluate('while (true) {}', {}, 300);
+      quickJSVM.evaluate('while (true) {}', {}, { timeoutMs: 300 });
     } catch (e: any) {
       expect(e.message).to.include('interrupted');
     }

@@ -27,7 +27,7 @@ describe('IsolateVM', function () {
   it('should throw an error when evaluation exceeds the timeout', async function () {
     const isolateVM = new IsolateVM();
     try {
-      await isolateVM.evaluate('while (true) {}', {}, 300);
+      await isolateVM.evaluate('while (true) {}', {}, { timeoutMs: 300 });
     } catch (e: any) {
       expect(e.message).to.include('execution timed out');
     }

@@ -20,7 +20,7 @@
     "quickjs-emscripten": "^0.31.0"
   },
   "scripts": {
-    "test": "mocha -r ts-node/register -b -t 0 'src/**/__tests__/*.test.ts'",
+    "test": "NODE_OPTIONS=--no-node-snapshot mocha -r ts-node/register -b -t 0 'src/**/__tests__/*.test.ts'",
     "build": "tsc",
     "prepare": "husky install",
     "lint": "eslint ."
