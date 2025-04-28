@@ -63,6 +63,36 @@ describe('IsolateVM', function () {
     isolateVM.dispose();
   });
 
+  it('envs can be passed as runtime options', async function () {
+    const isolateVM = new IsolateVM();
+    const result = await isolateVM.evaluate(
+      'obj.a = obj.a + 1; delete obj.b; obj;',
+      {},
+      { env: 'const obj = { a: 1, b: 2 };' },
+    );
+    expect(result).to.deep.equal({ a: 2 });
+    const result2 = await isolateVM.evaluate('obj', {}, { env: 'const obj = { a: 1, b: 2 };' });
+    expect(result2).to.deep.equal({ a: 1, b: 2 });
+    isolateVM.dispose();
+  });
+
+  it('envs that are passed as runtime options should not persist between evaluation contexts', async function () {
+    const isolateVM = new IsolateVM();
+    const result = await isolateVM.evaluate(
+      'obj.a = obj.a + 1; delete obj.b; obj;',
+      {},
+      { env: 'const obj = { a: 1, b: 2 };' },
+    );
+    expect(result).to.deep.equal({ a: 2 });
+    try {
+      await isolateVM.evaluate('obj');
+    } catch (e: any) {
+      expect(e.message).to.deep.contain('obj is not defined');
+    } finally {
+      isolateVM.dispose();
+    }
+  });
+
   it('should not persist mutations to JavaScript intrinsic objects', async function () {
     const isolateVM = new IsolateVM();
     const result = await isolateVM.evaluate(
@@ -71,6 +101,7 @@ describe('IsolateVM', function () {
     expect(result).to.deep.equal([1, 2, 'hacked']);
     const result2 = await isolateVM.evaluate('const arr = [1, 2]; arr.push(3); arr;');
     expect(result2).to.deep.equal([1, 2, 3]);
+    isolateVM.dispose();
   });
 
   it('should throw an error when the VM is disposed', async function () {

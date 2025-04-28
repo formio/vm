@@ -70,6 +70,38 @@ describe('QuickJSVM', function () {
     quickJSVM.dispose();
   });
 
+  it('envs can be passed as runtime options', async function () {
+    const quickJSVM = new QuickJSVM();
+    await quickJSVM.init();
+    const result = quickJSVM.evaluate(
+      'obj.a = obj.a + 1; delete obj.b; obj;',
+      {},
+      { env: 'const obj = { a: 1, b: 2 };' },
+    );
+    expect(result).to.deep.equal({ a: 2 });
+    const result2 = quickJSVM.evaluate('obj', {}, { env: 'const obj = { a: 1, b: 2 };' });
+    expect(result2).to.deep.equal({ a: 1, b: 2 });
+    quickJSVM.dispose();
+  });
+
+  it('envs that are passed as runtime options should not persist between evaluation contexts', async function () {
+    const quickJSVM = new QuickJSVM();
+    await quickJSVM.init();
+    const result = quickJSVM.evaluate(
+      'obj.a = obj.a + 1; delete obj.b; obj;',
+      {},
+      { env: 'const obj = { a: 1, b: 2 };' },
+    );
+    expect(result).to.deep.equal({ a: 2 });
+    try {
+      quickJSVM.evaluate('obj');
+    } catch (e: any) {
+      expect(e.message).to.deep.contain("'obj' is not defined");
+    } finally {
+      quickJSVM.dispose();
+    }
+  });
+
   it('should not persist mutations to JavaScript intrinsic objects', async function () {
     const quickJSVM = new QuickJSVM();
     await quickJSVM.init();
@@ -79,6 +111,7 @@ describe('QuickJSVM', function () {
     expect(result).to.deep.equal([1, 2, 'hacked']);
     const result2 = await quickJSVM.evaluate('const arr = [1, 2]; arr.push(3); arr;');
     expect(result2).to.deep.equal([1, 2, 3]);
+    quickJSVM.dispose();
   });
 
   it('should throw an error when the VM is not initialized', async function () {

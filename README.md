@@ -18,16 +18,16 @@ Please note that in addition to isolated-vm's [installation requirements](https:
 
 ### Shared Options
 
-- `timeoutMs?: number`: a timeout in milliseconds. The evaluate function will throw an error when a script exceeds this timeout. Defaults to 1000 milliseconds.
-- `memoryLimitMb?: number`: the memory limit in MB. The evaluate function will throw an error when a script exceeds this memory limit. Defaults to 128 MB.
+- `timeoutMs?: number`: a timeout in milliseconds. The evaluate function will throw an error when a script exceeds this timeout. Defaults to 1000 milliseconds. Can be passed as a constructor option or as a runtime evaluate option.
+- `memoryLimitMb?: number`: the memory limit in MB. The evaluate function will throw an error when a script exceeds this memory limit. Defaults to 128 MB. Can only be passed as a constructor option.
 - `env?: string`: a shared evaluation environment. Normal calls to evaluate functions will not share state, but the `env` will be precompiled into the context. See below for details.
 
 ### IsolateVM
 
 #### Methods
 
-- `evaluate(code: string, globals?: Record<string, TransferableValue>, timeout = VMOptions.timeoutMs): Promise<any>`: assign the globals object (if present) by key to the global scope and asynchronously evaluate the code. The last expression is returned as the result.
-- `evaluateSync(code: string, globals?: Record<string, TransferableValue>, timeout = VMOptions.timeoutMs): any`: assign the globals object (if present) by key to the global scope and evaluate the code. The last expression is returned as the result.
+- `evaluate(code: string, globals?: Record<string, TransferableValue>, options?: Omit<VMOptions, 'memoryLimitMb'>): Promise<any>`: assign the globals object (if present) by key to the global scope and asynchronously evaluate the code. The last expression is returned as the result.
+- `evaluateSync(code: string, globals?: Record<string, TransferableValue>, options?: Omit<VMOptions, 'memoryLimitMb'>): any`: assign the globals object (if present) by key to the global scope and evaluate the code. The last expression is returned as the result.
 - `dispose(): void`: free references and dispose of the underlyling v8 isolate.
 
 ### QuickJSVM
@@ -35,7 +35,7 @@ Please note that in addition to isolated-vm's [installation requirements](https:
 #### Methods
 
 - `init(): Promise<void>`: initialize the underlying WebAssembly module. Required to use an instance of QuickJSVM.
-- `evaluate(code: string, globals?: Record<string, TransferableValue>, timeout = VMOptions.timeoutMs): any`: assign the globals object (if present) by key to the global scope and _synchronously_ evaluate the code. The last expression is returned as the result.
+- `evaluate(code: string, globals?: Record<string, TransferableValue>, options?: Omit<VMOptions, 'memoryLimitMb'>): any`: assign the globals object (if present) by key to the global scope and _synchronously_ evaluate the code. The last expression is returned as the result.
 - `dispose(): void` - free references to the underlyling WASM module so it can be garbage collected.
 
 ## Usage
@@ -87,6 +87,28 @@ const result2 = isolateVM.evaluateSync('obj;'); // { a: 1, b: 1 }
 const quickJSVM = new QuickJSVM({ env: 'const obj = { a: 1, b: 1 };' });
 const result1 = quickJSVM.evaluateSync('obj.a = obj.a + 1; delete obj.b; obj;'); // { a: 2 }
 const result2 = quickJSVM.evaluateSync('obj;'); // { a: 1, b: 1 }
+```
+
+Additionally, for convenience, you can pass an `env` option to each evaluate function such that only that call to `evaluate` consumes the `env`. This may be useful in situations where an `env` is conditional or it is unable to be passed as part of the `globals` object. Keep in mind that an `env` passed in this way will be evaluated after any `env` passed to the constructor and before the `globals` object and `code` are evaluated.
+
+```ts
+const isolateVM = new IsolateVM();
+const result1 = isolateVM.evaluateSync(
+  'obj.a = obj.a + 1; delete obj.b; obj;',
+  {},
+  { env: 'const obj = { a: 1, b: 1 };' },
+); // { a: 2 }
+const result2 = isolateVM.evaluateSync('obj;', {}, { env: 'const obj = { a: 1, b: 1 };' }); // { a: 1, b: 1 }
+const result3 = isolateVM.evaluateSync('obj;'); // throws an error, 'obj is not defined'
+
+const quickJSVM = new QuickJSVM();
+const result1 = quickJSVM.evaluate(
+  'obj.a = obj.a + 1; delete obj.b; obj;',
+  {},
+  { env: 'const obj = { a: 1, b: 1 };' },
+); // { a: 2 }
+const result2 = quickJSVM.evaluate('obj;', {}, { env: 'const obj = { a: 1, b: 1 };' }); // { a: 1, b: 1 }
+const result3 = quickJSVM.evaluate('obj;'); // throws an error, "'obj' is not defined"
 ```
 
 You may consider adding (a modicum of) type safety by extending the VM class with a self-contained environment and corresponding methods.
