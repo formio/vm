@@ -118,8 +118,8 @@ export class QuickJSVM {
           handle.dispose();
         }
       });
-      if (options.modifyGlobals) {
-        const compileResult = vm.evalCode(options.modifyGlobals);
+      if (options.modifyEnv) {
+        const compileResult = vm.evalCode(options.modifyEnv);
         try {
           vm.unwrapResult(compileResult);
           compileResult.dispose();

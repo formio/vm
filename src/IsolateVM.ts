@@ -49,8 +49,8 @@ export class IsolateVM {
           log(`Error setting global ${key}:`, e);
         }
       }
-      if (options.modifyGlobals) {
-        await context.eval(options.modifyGlobals, { timeout: options.timeoutMs || this.timeout });
+      if (options.modifyEnv) {
+        await context.eval(options.modifyEnv, { timeout: options.timeoutMs || this.timeout });
       }
     }
     // Evaluate code
@@ -96,8 +96,8 @@ export class IsolateVM {
           log(`Error setting global ${key}:`, e);
         }
       }
-      if (options.modifyGlobals) {
-        context.evalSync(options.modifyGlobals, { timeout: options.timeoutMs || this.timeout });
+      if (options.modifyEnv) {
+        context.evalSync(options.modifyEnv, { timeout: options.timeoutMs || this.timeout });
       }
     }
     try {

@@ -67,7 +67,7 @@ describe('IsolateVM', function () {
     const result = await isolateVM.evaluate(
       'obj.a = obj.a + 1; delete obj.b; obj;',
       { obj: { a: 1, b: 2 } },
-      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
+      { modifyEnv: 'obj.a += 1; obj.b += 1;' },
     );
     expect(result).to.deep.equal({ a: 3 });
     isolateVM.dispose();
@@ -78,7 +78,7 @@ describe('IsolateVM', function () {
     const result = await isolateVM.evaluate(
       'obj',
       { obj: { a: 1, b: 2 } },
-      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
+      { modifyEnv: 'obj.a += 1; obj.b += 1;' },
     );
     expect(result).to.deep.equal({ a: 2, b: 3 });
     const result2 = await isolateVM.evaluate('obj', { obj: { a: 1, b: 2 } });

@@ -13,4 +13,4 @@ export type VMOptions = {
   env?: string;
 };
 
-export type EvaluateOptions = Omit<VMOptions, 'memoryLimitMb' | 'env'> & { modifyGlobals?: string };
+export type EvaluateOptions = Omit<VMOptions, 'memoryLimitMb' | 'env'> & { modifyEnv?: string };

@@ -75,7 +75,7 @@ describe('QuickJSVM', function () {
     const result = quickJSVM.evaluate(
       'obj.a = obj.a + 1; delete obj.b; obj;',
       { obj: { a: 1, b: 2 } },
-      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
+      { modifyEnv: 'obj.a += 1; obj.b += 1;' },
     );
     expect(result).to.deep.equal({ a: 3 });
     quickJSVM.dispose();
@@ -87,7 +87,7 @@ describe('QuickJSVM', function () {
     const result = quickJSVM.evaluate(
       'obj',
       { obj: { a: 1, b: 2 } },
-      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
+      { modifyEnv: 'obj.a += 1; obj.b += 1;' },
     );
     expect(result).to.deep.equal({ a: 2, b: 3 });
     const result2 = quickJSVM.evaluate('obj', { obj: { a: 1, b: 2 } });

@@ -133,7 +133,7 @@ const result2 = quickJSVM.evaluate('obj.a;', { obj: { a: (identity) => identity 
 quickJSVM.dispose();
 ```
 
-Additionally, globals can be conditionally modified by untrusted code (e.g. a form module) via the `modifyGlobals` option.
+Additionally, `env` and `globals` can be conditionally modified by untrusted code (e.g. a form module) via the `modifyEnv` option.
 
 ```ts
 const isolateVM = new IsolateVM();
@@ -142,7 +142,7 @@ const result1 = isolateVM.evaluateSync(
   {
     obj: { a: 1, b: 2 },
   },
-  { modifyGlobals: ' obj.a += 1; obj.b += 1;' },
+  { modifyEnv: ' obj.a += 1; obj.b += 1;' },
 ); // { a: 3 }
 const result2 = isolateVM.evaluateSync('obj;'); // throws an error, 'obj is not defined'
 isolateVM.dispose();
@@ -154,7 +154,7 @@ const result1 = quickJSVM.evaluate(
   {
     obj: { a: 1, b: 2 },
   },
-  { modifyGlobals: ' obj.a += 1; obj.b += 1;' },
+  { modifyEnv: ' obj.a += 1; obj.b += 1;' },
 ); // { a: 3 }
 const result2 = quickJSVM.evaluate('obj;'); // throws an error, "'obj' is not defined"
 quickJSVM.dispose();
