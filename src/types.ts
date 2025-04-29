@@ -12,3 +12,5 @@ export type VMOptions = {
   timeoutMs?: number;
   env?: string;
 };
+
+export type EvaluateOptions = Omit<VMOptions, 'memoryLimitMb' | 'env'> & { modifyGlobals?: string };

@@ -6,7 +6,7 @@ import {
   shouldInterruptAfterDeadline,
 } from 'quickjs-emscripten';
 import debug from 'debug';
-import { TransferableValue, VMOptions } from './types';
+import { TransferableValue, VMOptions, EvaluateOptions } from './types.js';
 
 const log = debug('formio:vm');
 
@@ -76,7 +76,7 @@ export class QuickJSVM {
   evaluate(
     code: string,
     globals?: Record<string, TransferableValue>,
-    options: Omit<VMOptions, 'memoryLimitMb'> = { timeoutMs: this.timeout },
+    options: EvaluateOptions = { timeoutMs: this.timeout },
   ) {
     if (!this.module) {
       throw new Error('Cannot evaluate, VM not initialized');
@@ -107,16 +107,6 @@ export class QuickJSVM {
         throw e;
       }
     }
-    if (options.env) {
-      const compileResult = vm.evalCode(options.env);
-      try {
-        vm.unwrapResult(compileResult);
-        compileResult.dispose();
-      } catch (e) {
-        console.error('Error evaluating env:', e);
-        throw e;
-      }
-    }
     if (globals) {
       Object.entries(globals).forEach(([key, value]) => {
         if (value === undefined) {
@@ -128,6 +118,16 @@ export class QuickJSVM {
           handle.dispose();
         }
       });
+      if (options.modifyGlobals) {
+        const compileResult = vm.evalCode(options.modifyGlobals);
+        try {
+          vm.unwrapResult(compileResult);
+          compileResult.dispose();
+        } catch (e) {
+          console.error('Error evaluating env:', e);
+          throw e;
+        }
+      }
     }
     const resultHandle = vm.evalCode(code);
     const result = vm.dump(vm.unwrapResult(resultHandle));

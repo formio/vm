@@ -26,8 +26,8 @@ Please note that in addition to isolated-vm's [installation requirements](https:
 
 #### Methods
 
-- `evaluate(code: string, globals?: Record<string, TransferableValue>, options?: Omit<VMOptions, 'memoryLimitMb'>): Promise<any>`: assign the globals object (if present) by key to the global scope and asynchronously evaluate the code. The last expression is returned as the result.
-- `evaluateSync(code: string, globals?: Record<string, TransferableValue>, options?: Omit<VMOptions, 'memoryLimitMb'>): any`: assign the globals object (if present) by key to the global scope and evaluate the code. The last expression is returned as the result.
+- `evaluate(code: string, globals?: Record<string, TransferableValue>, options?: EvaluateOptions): Promise<any>`: assign the globals object (if present) by key to the global scope and asynchronously evaluate the code. The last expression is returned as the result.
+- `evaluateSync(code: string, globals?: Record<string, TransferableValue>, options?: EvaluateOptions): any`: assign the globals object (if present) by key to the global scope and evaluate the code. The last expression is returned as the result.
 - `dispose(): void`: free references and dispose of the underlyling v8 isolate.
 
 ### QuickJSVM
@@ -35,7 +35,7 @@ Please note that in addition to isolated-vm's [installation requirements](https:
 #### Methods
 
 - `init(): Promise<void>`: initialize the underlying WebAssembly module. Required to use an instance of QuickJSVM.
-- `evaluate(code: string, globals?: Record<string, TransferableValue>, options?: Omit<VMOptions, 'memoryLimitMb'>): any`: assign the globals object (if present) by key to the global scope and _synchronously_ evaluate the code. The last expression is returned as the result.
+- `evaluate(code: string, globals?: Record<string, TransferableValue>, options?: EvaluateOptions): any`: assign the globals object (if present) by key to the global scope and _synchronously_ evaluate the code. The last expression is returned as the result.
 - `dispose(): void` - free references to the underlyling WASM module so it can be garbage collected.
 
 ## Usage
@@ -49,6 +49,7 @@ const vm = new QuickJSVM();
 await vm.init();
 
 const result = vm.evaluate('const a = "Hello"; `${a}, world!`'); // returns "Hello, world!"
+vm.dispose();
 ```
 
 ### IsolateVM
@@ -61,6 +62,7 @@ const vm = new IsolateVM();
 const result = vm.evaluateSync('const a = "Hello"; `${a}, world!`'); // returns "Hello, world!"
 // or...
 const result = await vm.evaluate('const a = "Hello"; `${a}, world!`'); // returns "Hello, world!"
+vm.dispose();
 ```
 
 ### Envs
@@ -71,13 +73,16 @@ VM evaluation contexts do not share state.
 const isolateVM = new IsolateVM();
 const result1 = isolateVM.evaluateSync('const a = 1; a + 1;'); // 2
 const result2 = isolateVM.evaluateSync('a + 1'); // throws an error, 'a is not defined'
+isolateVM.dispose();
 
 const quickJSVM = new QuickJSVM();
+await quickJSVM.init();
 const result1 = quickJSVM.evaluate('const a = 1; a + 1;'); // 2
 const result2 = quickJSVM.evaluate('a + 1'); // throws an error, "'a' is not defined"
+quickJSVM.dispose();
 ```
 
-However, each VM takes an `env` option which precompiles a script environment into its evaluation contexts. These environments are not mutable across evaluation contexts. **DO NOT INCLUDE UNTRUSTED CODE IN A VM'S ENVIRONMENT.**
+However, each VM takes an `env` option which precompiles a script environment into its evaluation contexts. These environments are not mutable across evaluation contexts. **DO NOT INCLUDE UNTRUSTED CODE IN A VM'S ENV.**
 
 ```ts
 const isolateVM = new IsolateVM({ env: 'const obj = { a: 1, b: 1 };' });
@@ -85,30 +90,9 @@ const result1 = isolateVM.evaluateSync('obj.a = obj.a + 1; delete obj.b; obj;');
 const result2 = isolateVM.evaluateSync('obj;'); // { a: 1, b: 1 }
 
 const quickJSVM = new QuickJSVM({ env: 'const obj = { a: 1, b: 1 };' });
+await quickJSVM.init();
 const result1 = quickJSVM.evaluateSync('obj.a = obj.a + 1; delete obj.b; obj;'); // { a: 2 }
 const result2 = quickJSVM.evaluateSync('obj;'); // { a: 1, b: 1 }
-```
-
-Additionally, for convenience, you can pass an `env` option to each evaluate function such that only that call to `evaluate` consumes the `env`. This may be useful in situations where an `env` is conditional or it is unable to be passed as part of the `globals` object. Keep in mind that an `env` passed in this way will be evaluated after any `env` passed to the constructor and before the `globals` object and `code` are evaluated.
-
-```ts
-const isolateVM = new IsolateVM();
-const result1 = isolateVM.evaluateSync(
-  'obj.a = obj.a + 1; delete obj.b; obj;',
-  {},
-  { env: 'const obj = { a: 1, b: 1 };' },
-); // { a: 2 }
-const result2 = isolateVM.evaluateSync('obj;', {}, { env: 'const obj = { a: 1, b: 1 };' }); // { a: 1, b: 1 }
-const result3 = isolateVM.evaluateSync('obj;'); // throws an error, 'obj is not defined'
-
-const quickJSVM = new QuickJSVM();
-const result1 = quickJSVM.evaluate(
-  'obj.a = obj.a + 1; delete obj.b; obj;',
-  {},
-  { env: 'const obj = { a: 1, b: 1 };' },
-); // { a: 2 }
-const result2 = quickJSVM.evaluate('obj;', {}, { env: 'const obj = { a: 1, b: 1 };' }); // { a: 1, b: 1 }
-const result3 = quickJSVM.evaluate('obj;'); // throws an error, "'obj' is not defined"
 ```
 
 You may consider adding (a modicum of) type safety by extending the VM class with a self-contained environment and corresponding methods.
@@ -126,6 +110,54 @@ class AdderVM extends IsolateVM {
 
 const vm = new AdderVM();
 const result = vm.safeAdd(1, 2); // 3
+```
+
+### Globals
+
+Globals are an object of transferable values that will be available on the global scope of the evaluation context. They resemble an `env` but are (a) only available to the specific evaluation context being utilized and (b) can only consist of transferable values.
+
+```ts
+const isolateVM = new IsolateVM();
+const result1 = isolateVM.evaluateSync('obj.a = obj.a + 1; delete obj.b; obj;', {
+  obj: { a: 1, b: 2 },
+}); // { a: 2 }
+const result2 = isolateVM.evaluateSync('obj.a;', { obj: { a: (identity) => identity } }); // throws an error, functions are not transferable
+isolateVM.dispose();
+
+const quickJSVM = new QuickJSVM();
+await quickJSVM.init();
+const result1 = quickJSVM.evaluate('obj.a = obj.a + 1; delete obj.b; obj;', {
+  obj: { a: 1, b: 2 },
+}); // { a: 2 }
+const result2 = quickJSVM.evaluate('obj.a;', { obj: { a: (identity) => identity } }); // throws an error functions are not transferable
+quickJSVM.dispose();
+```
+
+Additionally, globals can be conditionally modified by untrusted code (e.g. a form module) via the `modifyGlobals` option.
+
+```ts
+const isolateVM = new IsolateVM();
+const result1 = isolateVM.evaluateSync(
+  'obj.a = obj.a + 1; delete obj.b; obj;',
+  {
+    obj: { a: 1, b: 2 },
+  },
+  { modifyGlobals: ' obj.a += 1; obj.b += 1;' },
+); // { a: 3 }
+const result2 = isolateVM.evaluateSync('obj;'); // throws an error, 'obj is not defined'
+isolateVM.dispose();
+
+const quickJSVM = new QuickJSVM();
+await quickJSVM.init();
+const result1 = quickJSVM.evaluate(
+  'obj.a = obj.a + 1; delete obj.b; obj;',
+  {
+    obj: { a: 1, b: 2 },
+  },
+  { modifyGlobals: ' obj.a += 1; obj.b += 1;' },
+); // { a: 3 }
+const result2 = quickJSVM.evaluate('obj;'); // throws an error, "'obj' is not defined"
+quickJSVM.dispose();
 ```
 
 ### Security Notes

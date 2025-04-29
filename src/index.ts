@@ -1,6 +1,6 @@
-import { IsolateVM } from './IsolateVM';
-import { QuickJSVM } from './QuickJSVM';
-import { mockBrowserContext } from './mockBrowserContext';
+import { IsolateVM } from './IsolateVM.js';
+import { QuickJSVM } from './QuickJSVM.js';
+import { mockBrowserContext } from './mockBrowserContext.js';
 
-export * from './types';
+export * from './types.js';
 export { IsolateVM, QuickJSVM, mockBrowserContext };

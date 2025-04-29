@@ -1,6 +1,6 @@
 import ivm from 'isolated-vm';
 import debug from 'debug';
-import { TransferableValue, VMOptions } from './types';
+import { TransferableValue, VMOptions, EvaluateOptions } from './types.js';
 
 const log = debug('formio:vm');
 
@@ -21,7 +21,7 @@ export class IsolateVM {
   async evaluate(
     code: string,
     globals?: Record<string, TransferableValue>,
-    options: Omit<VMOptions, 'memoryLimitMb'> = {
+    options: EvaluateOptions = {
       timeoutMs: this.timeout,
     },
   ) {
@@ -40,32 +40,35 @@ export class IsolateVM {
     };
     await globalRef.set('console', consoleObj, { copy: true });
     await this.script?.run(context);
-    if (options.env) {
-      await context.eval(options.env, { timeout: options.timeoutMs || this.timeout });
-    }
     if (globals) {
       // Transfer globals to ivm context
       for (const key of Object.keys(globals)) {
         try {
           await context.global.set(key, globals[key], { copy: true });
         } catch (e) {
-          console.error(`Error setting global ${key}:`, e);
+          log(`Error setting global ${key}:`, e);
         }
+      }
+      if (options.modifyGlobals) {
+        await context.eval(options.modifyGlobals, { timeout: options.timeoutMs || this.timeout });
       }
     }
     // Evaluate code
-    const result = await context.eval(code, {
-      copy: true,
-      timeout: options.timeoutMs || this.timeout,
-    });
-    context.release();
-    return result;
+    try {
+      const result = await context.eval(code, {
+        copy: true,
+        timeout: options.timeoutMs || this.timeout,
+      });
+      return result;
+    } finally {
+      context.release();
+    }
   }
 
   evaluateSync(
     code: string,
     globals?: Record<string, TransferableValue>,
-    options: Omit<VMOptions, 'memoryLimitMb'> = {
+    options: EvaluateOptions = {
       timeoutMs: this.timeout,
     },
   ) {
@@ -84,26 +87,29 @@ export class IsolateVM {
     };
     globalRef.setSync('console', consoleObj, { copy: true });
     this.script?.runSync(context);
-    if (options.env) {
-      context.evalSync(options.env, { timeout: options.timeoutMs || this.timeout });
-    }
     if (globals) {
       // Transfer globals to ivm context
       for (const key of Object.keys(globals)) {
         try {
           context.global.setSync(key, globals[key], { copy: true });
         } catch (e) {
-          console.error(`Error setting global ${key}:`, e);
+          log(`Error setting global ${key}:`, e);
         }
       }
+      if (options.modifyGlobals) {
+        context.evalSync(options.modifyGlobals, { timeout: options.timeoutMs || this.timeout });
+      }
     }
-    // Evaluate code
-    const result = context.evalSync(code, {
-      copy: true,
-      timeout: options.timeoutMs || this.timeout,
-    });
-    context.release();
-    return result;
+    try {
+      // Evaluate code
+      const result = context.evalSync(code, {
+        copy: true,
+        timeout: options.timeoutMs || this.timeout,
+      });
+      return result;
+    } finally {
+      context.release();
+    }
   }
 
   dispose() {

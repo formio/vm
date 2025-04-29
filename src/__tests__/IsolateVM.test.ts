@@ -1,6 +1,5 @@
 import { expect } from 'chai';
-
-import { IsolateVM } from '../IsolateVM';
+import { IsolateVM } from '../IsolateVM.js';
 
 describe('IsolateVM', function () {
   it('should initialize and evaluate code', async function () {
@@ -63,27 +62,27 @@ describe('IsolateVM', function () {
     isolateVM.dispose();
   });
 
-  it('envs can be passed as runtime options', async function () {
+  it('globals can be modified with untrusted code', async function () {
     const isolateVM = new IsolateVM();
     const result = await isolateVM.evaluate(
       'obj.a = obj.a + 1; delete obj.b; obj;',
-      {},
-      { env: 'const obj = { a: 1, b: 2 };' },
+      { obj: { a: 1, b: 2 } },
+      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
     );
-    expect(result).to.deep.equal({ a: 2 });
-    const result2 = await isolateVM.evaluate('obj', {}, { env: 'const obj = { a: 1, b: 2 };' });
-    expect(result2).to.deep.equal({ a: 1, b: 2 });
+    expect(result).to.deep.equal({ a: 3 });
     isolateVM.dispose();
   });
 
-  it('envs that are passed as runtime options should not persist between evaluation contexts', async function () {
+  it('globals that are modified via runtime options should not persist between evaluation contexts', async function () {
     const isolateVM = new IsolateVM();
     const result = await isolateVM.evaluate(
-      'obj.a = obj.a + 1; delete obj.b; obj;',
-      {},
-      { env: 'const obj = { a: 1, b: 2 };' },
+      'obj',
+      { obj: { a: 1, b: 2 } },
+      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
     );
-    expect(result).to.deep.equal({ a: 2 });
+    expect(result).to.deep.equal({ a: 2, b: 3 });
+    const result2 = await isolateVM.evaluate('obj', { obj: { a: 1, b: 2 } });
+    expect(result2).to.deep.equal({ a: 1, b: 2 });
     try {
       await isolateVM.evaluate('obj');
     } catch (e: any) {

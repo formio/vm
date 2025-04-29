@@ -1,6 +1,5 @@
 import { expect } from 'chai';
-
-import { QuickJSVM } from '../QuickJSVM';
+import { QuickJSVM } from '../QuickJSVM.js';
 
 describe('QuickJSVM', function () {
   it('should initialize and evaluate code', async function () {
@@ -70,31 +69,31 @@ describe('QuickJSVM', function () {
     quickJSVM.dispose();
   });
 
-  it('envs can be passed as runtime options', async function () {
+  it('globals can be modified with untrusted code', async function () {
     const quickJSVM = new QuickJSVM();
     await quickJSVM.init();
     const result = quickJSVM.evaluate(
       'obj.a = obj.a + 1; delete obj.b; obj;',
-      {},
-      { env: 'const obj = { a: 1, b: 2 };' },
+      { obj: { a: 1, b: 2 } },
+      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
     );
-    expect(result).to.deep.equal({ a: 2 });
-    const result2 = quickJSVM.evaluate('obj', {}, { env: 'const obj = { a: 1, b: 2 };' });
-    expect(result2).to.deep.equal({ a: 1, b: 2 });
+    expect(result).to.deep.equal({ a: 3 });
     quickJSVM.dispose();
   });
 
-  it('envs that are passed as runtime options should not persist between evaluation contexts', async function () {
+  it('globals that are modified via runtime options should not persist between evaluation contexts', async function () {
     const quickJSVM = new QuickJSVM();
     await quickJSVM.init();
     const result = quickJSVM.evaluate(
-      'obj.a = obj.a + 1; delete obj.b; obj;',
-      {},
-      { env: 'const obj = { a: 1, b: 2 };' },
+      'obj',
+      { obj: { a: 1, b: 2 } },
+      { modifyGlobals: 'obj.a += 1; obj.b += 1;' },
     );
-    expect(result).to.deep.equal({ a: 2 });
+    expect(result).to.deep.equal({ a: 2, b: 3 });
+    const result2 = quickJSVM.evaluate('obj', { obj: { a: 1, b: 2 } });
+    expect(result2).to.deep.equal({ a: 1, b: 2 });
     try {
-      quickJSVM.evaluate('obj');
+      await quickJSVM.evaluate('obj');
     } catch (e: any) {
       expect(e.message).to.deep.contain("'obj' is not defined");
     } finally {
