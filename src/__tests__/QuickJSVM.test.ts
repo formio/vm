@@ -92,13 +92,22 @@ describe('QuickJSVM', function () {
     expect(result).to.deep.equal({ a: 2, b: 3 });
     const result2 = quickJSVM.evaluate('obj', { obj: { a: 1, b: 2 } });
     expect(result2).to.deep.equal({ a: 1, b: 2 });
-    try {
-      await quickJSVM.evaluate('obj');
-    } catch (e: any) {
-      expect(e.message).to.deep.contain("'obj' is not defined");
-    } finally {
-      quickJSVM.dispose();
-    }
+    expect(() => quickJSVM.evaluate('obj')).to.throw("'obj' is not defined");
+    quickJSVM.dispose();
+  });
+
+  it('globals should not contain non-transferable entities and any object containing one will transfer undefined for that parameter but successfully transfer the rest', async function () {
+    const quickJSVM = new QuickJSVM();
+    await quickJSVM.init();
+    // @ts-expect-error - Our TransferableValue type covers us at compile time, but we want to make sure runtime behavior is consistent
+    const result = quickJSVM.evaluate('obj.a', { obj: { a: (ident) => ident, b: 'transferable' } });
+    expect(result).to.be.undefined;
+    const result2 = quickJSVM.evaluate('obj.b', {
+      // @ts-expect-error - Our TransferableValue type covers us at compile time, but we want to make sure runtime behavior is consistent
+      obj: { a: (ident) => ident, b: 'transferable' },
+    });
+    expect(result2).to.equal('transferable');
+    quickJSVM.dispose();
   });
 
   it('should not persist mutations to JavaScript intrinsic objects', async function () {

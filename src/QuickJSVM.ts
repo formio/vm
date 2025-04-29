@@ -35,7 +35,7 @@ export class QuickJSVM {
       typeof value === 'symbol' ||
       typeof value === 'bigint'
     ) {
-      return;
+      return vm.undefined;
     }
 
     if (typeof value === 'string') {
