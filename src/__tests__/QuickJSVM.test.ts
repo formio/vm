@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { QuickJSVM } from '../QuickJSVM.js';
+import { QuickJSVM } from '../QuickJSVM';
 
 describe('QuickJSVM', function () {
   it('should initialize and evaluate code', async function () {

@@ -1,9 +1,13 @@
-import './setup.test.js';
 import { expect } from 'chai';
-import { IsolateVM } from '../IsolateVM.js';
+import { setup } from './setup';
+import { IsolateVM } from '../IsolateVM';
 
 describe('IsolateVM', function () {
   describe('evaluate', function () {
+    before('load chai-as-promised', async () => {
+      await setup();
+    });
+
     it('should initialize and evaluate code', async function () {
       const isolateVM = new IsolateVM();
       const result = await isolateVM.evaluate('1 + 1');

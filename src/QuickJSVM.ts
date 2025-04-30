@@ -6,7 +6,7 @@ import {
   shouldInterruptAfterDeadline,
 } from 'quickjs-emscripten';
 import debug from 'debug';
-import { TransferableValue, VMOptions, EvaluateOptions } from './types.js';
+import { TransferableValue, VMOptions, EvaluateOptions } from './types';
 
 const log = debug('formio:vm');
 
