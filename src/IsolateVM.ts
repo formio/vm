@@ -100,8 +100,12 @@ export class IsolateVM {
           log(`Error setting global ${key}:`, e);
         }
       }
-      if (options.modifyEnv) {
+    }
+    if (options.modifyEnv) {
+      try {
         context.evalSync(options.modifyEnv, { timeout: options.timeoutMs || this.timeout });
+      } catch (e) {
+        log('Error modifying env:', e);
       }
     }
     try {

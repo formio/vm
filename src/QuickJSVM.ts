@@ -118,15 +118,14 @@ export class QuickJSVM {
           handle.dispose();
         }
       });
-      if (options.modifyEnv) {
-        const compileResult = vm.evalCode(options.modifyEnv);
-        try {
-          vm.unwrapResult(compileResult);
-          compileResult.dispose();
-        } catch (e) {
-          console.error('Error evaluating env:', e);
-          throw e;
-        }
+    }
+    if (options.modifyEnv) {
+      const compileResult = vm.evalCode(options.modifyEnv);
+      try {
+        vm.unwrapResult(compileResult);
+        compileResult.dispose();
+      } catch (e) {
+        console.error('Error evaluating env:', e);
       }
     }
     const resultHandle = vm.evalCode(code);
