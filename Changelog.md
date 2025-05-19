@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 1.1.0-rc.3]
+## [Unreleased: 2.0.0-rc.1]
 
--   Change 1.1.x to fork from 1.0.x
+-   Change 2.0.x to fork from 1.0.x
 
 ## 1.0.2
 
