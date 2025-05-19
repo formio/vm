@@ -62,6 +62,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Updated @formio/core@2.4.1-rc.1
 -   Updated @formio/js@5.1.1-rc.1
+- FIO-8640: Adds rowIndex to the InstanceShim
+- FIO-9607 Mock document.querySelector
+- FIO-7223: fix sending emails with core logic inside nunjucks
+- you don't need to re-type fn args
+- FIO-9532: fixed an issue where select components shows values instead of labels in email
 
 ## 1.0.0
 
@@ -305,118 +310,118 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.24
+- Updated @formio/core@2.0.0-rc.24
 
 ### Changed
 
--   update lint config
--   FIO-8102: update to getComponent
--   renderEmail updated to use clearHidden processor
+- update lint config
+- FIO-8102: update to getComponent
+- renderEmail updated to use clearHidden processor
 
 ## 0.0.7-rc.17
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.23
+- Updated @formio/core@2.0.0-rc.23
 
 ### Changed
 
--   FIO-8102: add last path segment to make getComponent relatively performant
+- FIO-8102: add last path segment to make getComponent relatively performant
 
 ## 0.0.7-rc.16
 
 ### Changed
 
--   FIO-8102: update getComponent shim to reflect inexact paths
+- FIO-8102: update getComponent shim to reflect inexact paths
 
 ## 0.0.7-rc.15
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.22
+- Updated @formio/core@2.0.0-rc.22
 
 ## 0.0.7-rc.14
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.21
+- Updated @formio/core@2.0.0-rc.21
 
 ### Changed
 
--   FIO-8092: add isEmpty function to component instance shim
+- FIO-8092: add isEmpty function to component instance shim
 
 ## 0.0.7-rc.13
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.20
--   Updated formiojs@4.19.1-rc.1
+- Updated @formio/core@2.0.0-rc.20
+- Updated formiojs@4.19.1-rc.1
 
 ## 0.0.7-rc.12
 
 ### Changed
 
--   FIO-8061: swallow form module syntax errors
--   FIO-8069: Fix emails not sending when there are no conditional fields
+- FIO-8061: swallow form module syntax errors
+- FIO-8069: Fix emails not sending when there are no conditional fields
 
 ## 0.0.7-rc.11
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.19
+- Updated @formio/core@2.0.0-rc.19
 
 ## 0.0.7-rc.10
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.18
+- Updated @formio/core@2.0.0-rc.18
 
 ### Fixed
 
--   fix conditional fields visibility in emails
--   FIO-8040: Fix utils object
--   FIO-8046: Fix/add components array to rootshim
+- fix conditional fields visibility in emails
+- FIO-8040: Fix utils object
+- FIO-8046: Fix/add components array to rootshim
 
 ## 0.0.7-rc.9
 
 ### Changed
 
--   FIO-7992: Fix email blank values
+- FIO-7992: Fix email blank values
 
 ## 0.0.7-rc.8
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.17
+- Updated @formio/core@2.0.0-rc.17
 
 ## 0.0.7-rc.7
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.16
+- Updated @formio/core@2.0.0-rc.16
 
 ## 0.0.7-rc.6
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.15
+- Updated @formio/core@2.0.0-rc.15
 
 ## 0.0.7-rc.5
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.14
+- Updated @formio/core@2.0.0-rc.14
 
 ## 0.0.7-rc.4
 
 ### Changed
 
--   Updated @formio/core@2.0.0-rc.13
--   Updated formiojs@4.19.0
+- Updated @formio/core@2.0.0-rc.13
+- Updated formiojs@4.19.0
 
 ## 0.0.6-rc.1
 
 ### Changed
 
--   provide context var to eval context
--   add options with server: true to eval context
+- provide context var to eval context
+- add options with server: true to eval context
