@@ -31,6 +31,7 @@ export type EvaluateProcessorsOptions = {
     form: any;
     submission: any;
     scope?: any;
+    config?: any;
     token?: string;
     timeout?: number;
     additionalDeps?: string[];
@@ -46,6 +47,7 @@ export async function evaluateProcess({
     submission,
     timeout = globalTimeout,
     scope = {},
+    config = {},
     token = '',
     additionalDeps = [],
 }: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
@@ -57,6 +59,7 @@ export async function evaluateProcess({
         data: serializedSubmission.data,
         scope: scope,
         config: {
+            ...config,
             server: true,
             token,
         },
@@ -96,6 +99,7 @@ export async function evaluateProcessMocked(
         data: submission.data,
         scope: options.scope || {},
         config: {
+            ...(options.config || {}),
             server: true,
             token: options.token || '',
         },
