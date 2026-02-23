@@ -1,3 +1,4 @@
+/* eslint-disable no-shadow-restricted-names */
 declare const globalThis: any;
 export function mockBrowserContext() {
   if (!globalThis) return;
@@ -15,6 +16,7 @@ export function mockBrowserContext() {
       appendChild: () => {},
       setAttribute: () => {},
       getContext: () => ({}),
+      addEventListener: () => {},
     });
   if (!globalThis.document.querySelector) globalThis.document.querySelector = () => {};
   if (!globalThis.document.cookie) globalThis.document.cookie = '';

@@ -1,14 +1,92 @@
-# Change Log
+# @formio/vm
 
-All notable changes to this project will be documented in this file
+## 2.0.2
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/)
-and this project adheres to [Semantic Versioning](http://semver.org/).
+### Patch Changes
 
-## [Unreleased: 1.1.0-rc.1]
+- 63e1e81: changeset for CVE dependency bumps
+
+## 2.0.2-rc.0
+
+### Patch Changes
+
+- 63e1e81: changeset for CVE dependency bumps
+
+## 2.0.1
+
+### Patch Changes
+
+- 97ed1ec: Dependency updates
+
+## 2.0.1-api96.0
+
+### Patch Changes
+
+- 97ed1ec: Dependency updates
+
+## 2.0.0
 
 ### Changed
 
+- Official Release
+
+## 2.0.0-rc.1
+
+- Change 2.0.x to fork from 1.0.x
+
+## 1.0.2
+
+### Changed
+
+- Official Release
+- Updated @formio/core@2.4.1
+- Updated @formio/js@5.1.2
+
+## 1.0.2-rc.7
+
+### Changed
+
+- Updated @formio/core@2.4.1-rc.5
+- Updated @formio/js@5.1.2-rc.6
+
+## 1.0.2-rc.6
+
+### Changed
+
+- Updated @formio/core@2.4.1-rc.4
+- Updated @formio/js@5.1.2-rc.5
+
+## 1.0.2-rc.5
+
+### Changed
+
+- Updated @formio/js@5.1.2-rc.4
+
+## 1.0.2-rc.4
+
+### Changed
+
+- Updated @formio/js@5.1.2-rc.3
+
+## 1.0.2-rc.3
+
+### Changed
+
+- Updated @formio/js@5.1.2-rc.2
+
+## 1.0.2-rc.2
+
+### Changed
+
+- Updated @formio/core@2.4.1-rc.3
+- Updated @formio/js@5.1.2-rc.1
+
+## 1.0.1-rc.1
+
+### Changed
+
+- Updated @formio/core@2.4.1-rc.1
+- Updated @formio/js@5.1.1-rc.1
 - FIO-8640: Adds rowIndex to the InstanceShim
 - FIO-9607 Mock document.querySelector
 - FIO-7223: fix sending emails with core logic inside nunjucks
@@ -20,19 +98,225 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Official Release
+- Updated @formio/core@2.4.0
+- Updated @formio/js@5.1.0
+
+## 1.0.0-rc.33
+
+### Changed
+
 - Update tar-fs@2.1.2
+
+## 1.0.0-rc.32
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.14
+- Updated @formio/js@5.1.0-rc.32
+
+## 1.0.0-rc.31
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.13
+- Updated @formio/js@5.1.0-rc.31
+
+## 1.0.0-rc.30
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.30
+
+## 1.0.0-rc.29
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.29
+
+## 1.0.0-rc.28
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.28
+
+## 1.0.0-rc.27
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.27
+
+## 1.0.0-rc.26
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.26
+
+## 1.0.0-rc.25
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.25
+
+## 1.0.0-rc.24
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.24
+
+## 1.0.0-rc.23
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.23
 - FIO-8250: decouple polyfill code from core, and move it to a separate file
+
+## 1.0.0-rc.22
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.12
+- Updated @formio/js@5.1.0-rc.22
 - FIO-9406: add visible getter to InstanceShim
+
+## 1.0.0-rc.21
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.21
+
+## 1.0.0-rc.20
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.11
+- Updated @formio/js@5.1.0-rc.20
+
+## 1.0.0-rc.19
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.10
+- Updated @formio/js@5.1.0-rc.18
+
+## 1.0.0-rc.18
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.17
 - FIO-9640: Add submissionTimeZone option in form
+
+## 1.0.0-rc.17
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.16
+
+## 1.0.0-rc.16
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.9
+- Updated @formio/js@5.1.0-rc.15
+
+## 1.0.0-rc.15
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.13
+
+## 1.0.0-rc.14
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.12
+
+## 1.0.0-rc.13
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.7
+- Updated @formio/js@5.1.0-rc.10
+
 - FIO-9508: update InstanceShim to respect new pathing options
+
+## 1.0.0-rc.12
+
+### Changed
+
 - FIO-9607 Mock document.querySelector
+
+## 1.0.0-rc.11
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.6
+- Updated @formio/js@5.1.0-rc.9
 - FIO-9618: Add timeout for form rendering in email
+
+## 1.0.0-rc.10
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.8
 - FIO-9499 Mock global NodeList object
+
+## 1.0.0-rc.9
+
+### Changed
+
+- Updated @formio/js@5.1.0-rc.7
+
+## 1.0.0-rc.8
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.5
+- Updated @formio/js@5.1.0-rc.6
 - FIO-8640: Adds rowIndex to the InstanceShim
+
+## 1.0.0-rc.7
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.4
+- Updated @formio/js@5.1.0-rc.5
+
+## 1.0.0-rc.6
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.3
+- Updated @formio/js@5.1.0-rc.3
+
+## 1.0.0-rc.5
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.2
+- Updated @formio/js@5.1.0-rc.2
+
+## 1.0.0-rc.4
+
+### Changed
+
+- Updated @formio/core@2.4.0-rc.1
+- Updated @formio/js@5.1.0-rc.1
+
+### Changed
+
 - FIO-9021: Fixed hidden nested form components rendering in email
 - FIO-9064: update customDefaultValue method
 - FIO-9064: add getCustomDefaultValue method to InstanceShim, add globally configured timeout
 - FIO-8250 updated inputmask lib
+
+## 1.0.0-rc.1
+
+### Changed
+
+- Updated @formio/core@2.1.1-rc.1
+
+### Changed
+
 - Upgrade formiojs to @formio/js 5.x version.
 - FIO-8143: migrate RootShim to eachComponent vs eachComponentData
 - FIO-8145: injectable deps
